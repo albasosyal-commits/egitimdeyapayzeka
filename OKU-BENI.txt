@@ -1,0 +1,114 @@
+ÖĞRETMENİN YAPAY ZEKÂ REHBERİ
+=============================
+
+Bu klasör sitenin tamamıdır. Kurulum gerekmez.
+
+
+SİTEYİ AÇMAK
+------------
+index.html dosyasına çift tıkla. Hepsi bu.
+
+
+YÖNETİM PANELİNİ AÇMAK
+----------------------
+Paneli-ac.bat dosyasına çift tıkla.
+
+  · Siyah bir pencere açılır (sunucu). O pencereyi kapatma.
+  · Tarayıcıda panel açılır.
+  · Kullanıcı adı: atabey
+
+İşin bitince siyah pencereyi kapat.
+
+Node.js kurulu değilse panel yine çalışır: yonetim.html dosyasına çift tıkla.
+Fark şu: sunucu açıkken "Kaydet" dosyaları doğrudan yazar, kapalıyken
+dosyaları indirir ve sen veri klasörüne taşırsın. Sunucu açıkken ayrıca
+görsel yükleyebilirsin.
+
+
+PANELDEN NELER YAPILIR
+----------------------
+  Araçlar           Araç ekle, düzenle, sil, sırasını değiştir, kopyala,
+                    gizle / yayınla
+  Görseller         Logo ve tanıtım görseli yükle / kaldır
+  Görev rehberleri  Ana sayfadaki "Yapacağın işi seç" kutucuklarını ekle,
+                    çıkar, sırala, ikonunu seç, gizle / yayınla
+  Tema ve renkler   Hazır tema seç, her rengi tek tek ayarla, kutucukların
+                    biçimini seç (yuvarlak / altıgen / yumuşak kare)
+  Site ayarları     Site adı, okul adı, site logosu, kategoriler,
+                    ücret etiketleri, panel şifresi
+  Rehber metinleri  Prompt Atölyesi, Güvenli Kullanım, Yeni Başlayanlar
+  Yedek             Her şeyi tek dosyaya indir, gerektiğinde geri yükle
+
+
+GİZLE / YAYINLA
+---------------
+Araç ve görev listelerindeki "Gizle" düğmesi, o kaydı siteden tamamen kaldırır:
+listede, aramada ve görev rehberlerinin araç önerilerinde görünmez. Silmez,
+yalnızca gizler; "Yayınla" dediğinde geri gelir.
+
+Hazırlanmakta olan bir aracı gizli tutup, bittiğinde yayınlayabilirsin.
+
+
+YENİ EKLENENLER ŞERİDİ
+----------------------
+Ana sayfada "Bugün ne hazırlıyorsun?" ile "Yapacağın işi seç" arasında küçük
+bir şerit var. Orada "yeni eklendi" işaretli araçların logoları sırayla
+belirir; tıklayınca o aracın sayfası açılır.
+
+Panelden eklediğin her yeni araç bu şeride kendiliğinden girer. Araç
+düzenleme formundaki "Yeni eklenenler şeridi" alanından çıkarabilir ya da
+başka bir aracı şeride koyabilirsin. Şerit en fazla 10 araç gösterir;
+hiçbiri işaretli değilse şerit hiç görünmez.
+
+
+ÖNEMLİ: GİRİŞ GERÇEK BİR GÜVENLİK DEĞİLDİR
+------------------------------------------
+Paneldeki kullanıcı adı ve şifre, paneli yanlışlıkla açmayı engelleyen bir
+kilittir. Şifre veri/yonetici.js dosyasında SHA-256 özeti olarak durur;
+site dosyalarını okuyabilen biri bu dosyayı da okur.
+
+Bu yüzden siteyi internette yayımlarsan yonetim.html sayfasını ve veri
+klasörünü dışarıya açma. Panel, okulun kendi bilgisayarında kullanılmak
+üzere yapılmıştır.
+
+
+KLASÖRLER
+---------
+  index.html        Site
+  yonetim.html      Yönetim paneli
+  Paneli-ac.bat     Sunucuyu başlatır ve paneli açar
+  yerel-sunucu.js   Küçük yerel sunucu (Node.js ile çalışır)
+
+  veri/             Sitenin bütün içeriği
+    site.js         Site adı, okul, kategoriler, ücret etiketleri
+    araclar.js      Araç listesi
+    gorseller.js    Hangi araç hangi görseli kullanıyor
+    gorevler.js     Görev rehberleri
+    rehber.js       Prompt / güvenlik / başlangıç metinleri
+    tema.js         Renkler ve yazı tipi
+    yonetici.js     Panel kullanıcı adı ve şifre özeti
+
+  assets/logo/      Araç logoları
+  assets/gorsel/    Araç tanıtım görselleri
+  css/, js/         Görünüm ve motor (panelden değişmez)
+    js/ikonlar.js   Görev kutucuklarının ikonları; yeni ikon buraya eklenir
+  yedek/            Panel her kayıttan önce eski dosyaları buraya kopyalar
+
+
+BİR ŞEY BOZULURSA
+-----------------
+yedek/ klasöründe tarih-saat adlı klasörler var. İçindeki dosyayı veri/
+klasörüne geri kopyalaman yeterli.
+
+Panelin "Yedek ve aktarma" bölümünden indirdiğin .json dosyasını da aynı
+bölümden geri yükleyebilirsin.
+
+
+NOT
+---
+Araç logoları ve tanıtım görselleri araçların kendi sitelerinden alınmıştır;
+markalar sahiplerine aittir. Siteyi okul dışında yayımlayacaksan bu konuyu
+gözden geçir.
+
+Araç ücretleri ve koşulları sık değişir. Panelde her aracın "Bilgi kontrol
+tarihi" alanı var; güncellediğinde orayı da güncelle.

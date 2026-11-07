@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Yönetim Paneli · Öğretmenin Yapay Zekâ Rehberi</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,500;9..144,650&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/site.css">
+  <link rel="stylesheet" href="css/yonetim.css">
+  <script src="veri/site.js"></script>
+  <script src="veri/tema.js"></script>
+  <script src="js/tema.js"></script>
+  <script src="js/ikonlar.js"></script>
+</head>
+<body class="panel-govde">
+
+  <!-- Giriş ekranı -->
+  <div class="giris-perde" id="giris-perde">
+    <form class="giris-kutu" id="giris-form" autocomplete="on">
+      <div class="isaret">Y</div>
+      <h1>Yönetim paneli</h1>
+      <p class="giris-alt">Araçları, görselleri ve temayı buradan yönetiyorsun.</p>
+      <label class="alan">
+        <span>Kullanıcı adı</span>
+        <input class="girdi" id="g-kullanici" name="username" autocomplete="username" required>
+      </label>
+      <label class="alan">
+        <span>Şifre</span>
+        <input class="girdi" id="g-sifre" name="password" type="password" autocomplete="current-password" required>
+      </label>
+      <p class="hata" id="g-hata" role="alert" hidden></p>
+      <button class="dugme" type="submit" id="g-gonder">Giriş yap</button>
+      <p class="giris-not">
+        Bu giriş paneli yanlışlıkla açmayı engeller; gerçek bir güvenlik duvarı değildir.
+        Siteyi internette yayımlarsan <strong>yonetim.html</strong> sayfasını ve <strong>veri</strong>
+        klasörünü dışarıya açma.
+      </p>
+      <p class="giris-not"><a href="index.html">← Siteye dön</a></p>
+    </form>
+  </div>
+
+  <!-- Panel -->
+  <div class="panel" id="panel" hidden>
+    <aside class="yan">
+      <div class="yan-marka">
+        <span class="isaret" id="yan-im">Y</span>
+        <span>
+          <strong id="yan-ad">Rehber</strong>
+          <small>Yönetim paneli</small>
+        </span>
+      </div>
+
+      <nav id="yan-menu" aria-label="Panel bölümleri"></nav>
+
+      <div class="yan-dip">
+        <p class="sunucu-durum" id="sunucu-durum"></p>
+        <a href="index.html" target="_blank" rel="noopener">Siteyi yeni sekmede aç</a>
+        <button type="button" id="cikis">Çıkış yap</button>
+      </div>
+    </aside>
+
+    <div class="ic">
+      <header class="panel-ust">
+        <h1 id="bolum-baslik">Panel</h1>
+        <span class="kayit-durum temiz" id="kayit-durum"><span class="nokta"></span><span id="kayit-yazi">Her şey kayıtlı</span></span>
+        <button class="dugme" type="button" id="kaydet-dugme">Kaydet</button>
+      </header>
+      <main class="govde" id="bolum" tabindex="-1"></main>
+    </div>
+  </div>
+
+  <div id="bildirim" class="bildirim" role="status" aria-live="polite"></div>
+
+  <script src="veri/yonetici.js"></script>
+  <script src="veri/araclar.js"></script>
+  <script src="veri/gorseller.js"></script>
+  <script src="veri/gorevler.js"></script>
+  <script src="veri/rehber.js"></script>
+  <script src="js/ozet.js"></script>
+  <script src="js/yonetim.js"></script>
+</body>
+</html>

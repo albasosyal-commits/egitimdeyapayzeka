@@ -1,0 +1,10 @@
+# Panelin her kayıttan önce aldığı yedekler. Yerelde kalsın.
+yedek/
+
+# Kişiye özel Claude Code ayarları
+.claude/settings.local.json
+
+# İşletim sistemi dosyaları
+Thumbs.db
+desktop.ini
+.DS_Store

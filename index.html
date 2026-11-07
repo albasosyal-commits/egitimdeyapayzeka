@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Öğretmenin Yapay Zekâ Rehberi</title>
+  <meta name="description" content="Öğretmenler için göreve göre yapay zekâ rehberi: doğru aracı seçin, hazır promptları kullanın, güvenli çalışın.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,500;9..144,650&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/site.css">
+  <!-- Renkler ve yazı tipi: veri/tema.js (yönetim panelindeki Tema bölümünden değişir) -->
+  <script src="veri/site.js"></script>
+  <script src="veri/tema.js"></script>
+  <script src="js/tema.js"></script>
+  <script src="js/ikonlar.js"></script>
+</head>
+<body>
+  <a class="atla" href="#ana">İçeriğe geç</a>
+
+  <header class="ust">
+    <div class="kap ust-ic">
+      <a class="marka" href="#/">
+        <img id="marka-logo" class="marka-logo" alt="" hidden>
+        <span class="marka-yazi">
+          <strong id="marka-ad"></strong>
+          <small id="marka-okul"></small>
+        </span>
+      </a>
+      <button class="menu-dugme" type="button" aria-expanded="false" aria-controls="ana-menu">Menü</button>
+      <nav id="ana-menu" class="menu" aria-label="Ana menü">
+        <a href="#/" data-nav="gorev">Görevler</a>
+        <a href="#/araclar" data-nav="araclar">Araçlar</a>
+        <a href="#/prompt" data-nav="prompt">Prompt Atölyesi</a>
+        <a href="#/guvenli" data-nav="guvenli">Güvenli Kullanım</a>
+        <a href="#/baslangic" data-nav="baslangic">Yeni Başlayanlar</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="ana" tabindex="-1"></main>
+
+  <footer class="alt">
+    <div class="kap alt-ic">
+      <div>
+        <strong id="alt-okul"></strong>
+        <p id="alt-not"></p>
+      </div>
+      <a class="alt-ekle" href="yonetim.html">Yönetim paneli</a>
+    </div>
+  </footer>
+
+  <div id="bildirim" class="bildirim" role="status" aria-live="polite"></div>
+
+  <script src="veri/araclar.js"></script>
+  <script src="veri/gorseller.js"></script>
+  <script src="veri/gorevler.js"></script>
+  <script src="veri/rehber.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
