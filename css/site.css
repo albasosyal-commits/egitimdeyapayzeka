@@ -395,46 +395,103 @@ ul.logolu { list-style: none; padding: 0; display: grid; gap: 8px; }
 ul.logolu li { display: flex; align-items: center; gap: 10px; margin: 0; }
 .yon-liste .logo + span { margin-right: auto; }
 
-/* ---------- "Yapacağın işi seç" kutucukları ---------- */
-/* Kart yerine ikon madalyonu: büyük ikon, altında küçük başlık.
-   Madalyonun biçimi (yuvarlak / altıgen / yumuşak kare) panelden seçilir;
-   .is-izgara üzerindeki sekil-* sınıfı belirler. */
+/* ---------- "Yapacağın işi seç" kategori kartları ---------- */
+/* Sade ve modern kategori kartları: üstte zengin duotone ikon madalyonu,
+   altında kategori başlığı ve kısa açıklama. Madalyon biçimi (yuvarlak / altıgen /
+   yumuşak kare) yönetim panelinden seçilebilir. */
 .is-izgara {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(126px, 1fr));
-  gap: 26px 10px;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 14px;
 }
 .is-kart {
-  display: flex; flex-direction: column; align-items: center; gap: 11px;
-  text-align: center; text-decoration: none; color: inherit; padding: 4px 2px;
+  position: relative;
+  display: flex; flex-direction: column; align-items: center; gap: 13px;
+  text-align: center; text-decoration: none; color: inherit;
+  background: var(--kart);
+  border: 1px solid var(--cizgi);
+  border-radius: calc(var(--yaricap) + 4px);
+  padding: 20px 12px 16px;
+  overflow: hidden;
+  transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+}
+.is-kart::before {
+  content: ''; position: absolute; inset: 0 0 auto 0; height: 3px;
+  background: currentColor; opacity: .55;
+  transition: opacity .2s ease, height .2s ease;
 }
 .is-madalyon {
-  width: 86px; height: 86px; display: grid; place-items: center;
-  background: color-mix(in srgb, currentColor 11%, var(--kart));
-  border: 1px solid color-mix(in srgb, currentColor 22%, var(--kart));
-  transition: transform .2s ease, box-shadow .2s ease, background-color .2s ease;
+  width: 72px; height: 72px; display: grid; place-items: center; flex-shrink: 0;
+  background:
+    radial-gradient(circle at 30% 25%, color-mix(in srgb, currentColor 22%, var(--kart)), color-mix(in srgb, currentColor 9%, var(--kart)));
+  border: 1.5px solid color-mix(in srgb, currentColor 24%, var(--kart));
+  box-shadow: 0 6px 16px color-mix(in srgb, currentColor 12%, transparent);
+  transition: transform .22s cubic-bezier(.2, .8, .2, 1), box-shadow .22s ease, background .22s ease;
 }
-.is-madalyon .ikon { width: 38px; height: 38px; }
-.is-kart b { font-size: .9rem; font-weight: 600; line-height: 1.3; max-width: 15ch; color: var(--murekkep); }
-.is-kart small { font-size: .76rem; color: var(--soluk); display: block; margin-top: 2px; }
+.is-madalyon .ikon {
+  width: 36px; height: 36px;
+  transition: transform .22s cubic-bezier(.2, .8, .2, 1);
+}
+.is-yazi { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+.is-kart b {
+  font-size: .95rem; font-weight: 700; line-height: 1.25;
+  color: var(--murekkep); display: block;
+}
+.is-kart small {
+  font-size: .78rem; color: var(--soluk); line-height: 1.3;
+  display: block; margin-top: 2px;
+}
+.is-kart:hover,
+.is-kart:focus-visible {
+  transform: translateY(-4px);
+  box-shadow: var(--golge);
+  border-color: color-mix(in srgb, currentColor 42%, var(--cizgi));
+  outline: none;
+}
+.is-kart:hover::before,
+.is-kart:focus-visible::before { opacity: 1; height: 4px; }
 .is-kart:hover .is-madalyon,
 .is-kart:focus-visible .is-madalyon {
-  transform: translateY(-5px);
-  background: color-mix(in srgb, currentColor 20%, var(--kart));
-  box-shadow: var(--golge);
+  transform: scale(1.06);
+  background:
+    radial-gradient(circle at 30% 25%, color-mix(in srgb, currentColor 30%, var(--kart)), color-mix(in srgb, currentColor 14%, var(--kart)));
+  box-shadow: 0 8px 20px color-mix(in srgb, currentColor 20%, transparent);
 }
-.is-kart:hover b { text-decoration: underline; text-underline-offset: 3px; }
-.is-kart:focus-visible { outline: none; }
-.is-kart:focus-visible b { text-decoration: underline; text-underline-offset: 3px; }
+.is-kart:hover .is-madalyon .ikon,
+.is-kart:focus-visible .is-madalyon .ikon { transform: scale(1.08); }
+
+/* Yedi kategorinin her biri kendi ayırt edici rengini alır */
+.m-metin { color: var(--k-metin); }
+.m-gorsel { color: var(--k-gorsel); }
+.m-ses { color: var(--k-ses); }
+.m-video { color: var(--k-video); }
+.m-sunum { color: var(--k-egitim); }
+.m-arastirma { color: color-mix(in srgb, var(--k-metin) 52%, var(--k-ses)); }
+.m-oyun { color: color-mix(in srgb, var(--k-video) 55%, var(--k-metin)); }
 
 .sekil-yuvarlak .is-madalyon { border-radius: 50%; }
-.sekil-yumusak .is-madalyon { border-radius: 30%; }
+.sekil-yumusak .is-madalyon { border-radius: 26%; }
 .sekil-altigen .is-madalyon {
-  border: 0; border-radius: 0;
-  background: color-mix(in srgb, currentColor 15%, var(--kart));
+  border: 0; border-radius: 0; box-shadow: none;
+  background: color-mix(in srgb, currentColor 16%, var(--kart));
   clip-path: polygon(50% 0%, 93.3% 25%, 93.3% 75%, 50% 100%, 6.7% 75%, 6.7% 25%);
 }
 .sekil-altigen .is-kart:hover .is-madalyon { box-shadow: none; }
+
+/* Görev detay sayfasındaki başlık ikonu, çoklu prompt yığını ve diğer işler çipleri */
+.kucuk-madalyon { width: 56px; height: 56px; border-radius: 16px; }
+.kucuk-madalyon .ikon { width: 30px; height: 30px; }
+.prompt-yigin { display: grid; gap: 16px; }
+.diger-gorevler { display: flex; flex-wrap: wrap; gap: 10px; }
+.diger-cip {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: var(--kart); border: 1px solid var(--cizgi); border-radius: 99px;
+  padding: 7px 15px 7px 10px; text-decoration: none; color: var(--murekkep);
+  font-weight: 600; font-size: .92rem;
+  transition: transform .16s ease, border-color .16s ease, box-shadow .16s ease;
+}
+.diger-cip:hover { transform: translateY(-2px); border-color: var(--cizgi-koyu); box-shadow: var(--golge); }
+.diger-cip .ikon { width: 20px; height: 20px; display: block; }
 
 /* ---------- Yeni eklenen araçlar şeridi ---------- */
 .yeni-serit { background: var(--kagit); border-bottom: 1px solid var(--cizgi); padding: 13px 0; }
@@ -483,11 +540,15 @@ ul.logolu li { display: flex; align-items: center; gap: 10px; margin: 0; }
   50% { transform: translateY(-3px); }
 }
 
+@media (max-width: 980px) {
+  .is-izgara { grid-template-columns: repeat(auto-fill, minmax(148px, 1fr)); gap: 12px; }
+}
 @media (max-width: 560px) {
-  .is-izgara { grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 20px 8px; }
-  .is-madalyon { width: 72px; height: 72px; }
-  .is-madalyon .ikon { width: 32px; height: 32px; }
-  .is-kart b { font-size: .84rem; }
+  .is-izgara { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .is-kart { padding: 16px 10px 14px; gap: 10px; }
+  .is-madalyon { width: 62px; height: 62px; }
+  .is-madalyon .ikon { width: 30px; height: 30px; }
+  .is-kart b { font-size: .88rem; }
   .yeni-liste { gap: 6px; }
   .yeni-rozet { font-size: .82rem; padding-right: 11px; }
 }

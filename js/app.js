@@ -26,8 +26,12 @@
       .replace(/ü/g, 'u').replace(/ö/g, 'o').replace(/ç/g, 'c')
       .normalize('NFD').replace(/[̀-ͯ]/g, '');
   }
+  var ESKI_GOREV = { 'sinav': 'metin', 'ders-plani': 'metin', 'uyarlama': 'metin', 'yazisma': 'metin', 'hikaye': 'metin', 'belge': 'arastirma' };
   function aracBul(id) { return ARACLAR.find(function (a) { return a.id === id; }); }
-  function gorevBul(id) { return GOREVLER.find(function (g) { return g.id === id; }); }
+  function gorevBul(id) {
+    var hedef = ESKI_GOREV[id] || id;
+    return GOREVLER.find(function (g) { return g.id === hedef; });
+  }
   function katAd(k) { return (S.kategoriler[k] || {}).ad || k; }
   function guvenliUrl(u) { return /^https?:\/\//i.test(u || '') ? u : '#'; }
   function ucretRozet(a) { return '<span class="rozet ' + esc(a.ucret) + '">' + esc(S.ucretler[a.ucret] || a.ucret) + '</span>'; }
@@ -70,11 +74,12 @@
       (a.yeni ? '<span class="rozet yeni">Öğretmene özel</span>' : '') + '</div></div></a>';
   }
 
-  /* Ana sayfadaki iş kutucuğu: büyük ikon, altında küçük başlık ve süre. */
+  /* Ana sayfadaki iş kutucuğu: zengin ikon grafiği, altında başlık ve kısa açıklama. */
   function isKutucuk(g) {
-    return '<a class="is-kart" href="#/gorev/' + esc(g.id) + '" title="' + esc(g.ozet) + '">' +
-      '<span class="is-madalyon y-' + esc(g.kategori) + '">' + window.ikonCiz(g.ikon) + '</span>' +
-      '<span><b>' + esc(g.baslik) + '</b><small>' + esc(g.sure) + '</small></span></a>';
+    var alt = g.kisa || g.sure || '';
+    return '<a class="is-kart m-' + esc(g.id) + '" href="#/gorev/' + esc(g.id) + '" title="' + esc(g.ozet) + '">' +
+      '<span class="is-madalyon y-' + esc(g.kategori) + ' m-' + esc(g.id) + '">' + window.ikonCiz(g.ikon) + '</span>' +
+      '<span class="is-yazi"><b>' + esc(g.baslik) + '</b>' + (alt ? '<small>' + esc(alt) + '</small>' : '') + '</span></a>';
   }
 
   /* Kutucukların biçimi panelin Tema bölümünden seçilir. */
@@ -99,7 +104,10 @@
   /* ---------- Sayfalar ---------- */
 
   function sayfaAnasayfa() {
-    var promptSay = GOREVLER.length + aktif.filter(function (a) { return a.prompt; }).length;
+    var gorevPromptSay = GOREVLER.reduce(function (t, g) {
+      return t + (g.promptlar && g.promptlar.length ? g.promptlar.length : (g.prompt ? 1 : 0));
+    }, 0);
+    var promptSay = gorevPromptSay + aktif.filter(function (a) { return a.prompt; }).length;
     return {
       baslik: '',
       nav: 'gorev',
@@ -238,18 +246,30 @@
         logoKutu(a) +
         '<span><strong>' + esc(a.ad) + '</strong><small>' + esc(x.neden) + '</small></span>' + ucretRozet(a) + '</a></li>';
     }).join('');
-    var diger = GOREVLER.filter(function (o) { return o.id !== g.id && o.kategori === g.kategori; }).slice(0, 3);
+    var promptListesi = (g.promptlar && g.promptlar.length)
+      ? g.promptlar
+      : (g.prompt ? [{ baslik: 'Hazır prompt', prompt: g.prompt }] : []);
+    var promptBolumu = promptListesi.length
+      ? '<section><h2>' + (promptListesi.length > 1 ? 'Hazır promptlar' : 'Bu promptu kopyala') + '</h2>' +
+        '<div class="prompt-yigin">' + promptListesi.map(function (p) {
+          return tahta(p.prompt, p.baslik || 'Hazır prompt');
+        }).join('') + '</div><p class="alt-not">Köşeli parantezli yerleri kendi dersine göre değiştir.</p></section>'
+      : '';
+    var diger = GOREVLER.filter(function (o) { return o.id !== g.id; });
     return {
       baslik: g.baslik,
       nav: 'gorev',
       html: '<div class="kap"><div class="sayfa-bas"><p class="kirinti"><a href="#/">Görevler</a> / ' + esc(katAd(g.kategori)) + '</p>' +
-        '<h1>' + esc(g.baslik) + '</h1><p class="giris">' + esc(g.ozet) + ' Tahminî süre: ' + esc(g.sure) + '.</p></div>' +
+        '<div class="baslik-satir"><span class="is-madalyon kucuk-madalyon y-' + esc(g.kategori) + ' m-' + esc(g.id) + '">' + window.ikonCiz(g.ikon) + '</span><h1>' + esc(g.baslik) + '</h1></div>' +
+        '<p class="giris">' + esc(g.ozet) + (g.sure ? ' Tahminî süre: ' + esc(g.sure) + '.' : '') + '</p></div>' +
         '<div class="icerik dar" style="padding:26px 0 40px">' +
         '<section><h2>Hangi aracı açmalısın?</h2><ul class="tercih">' + araclar + '</ul></section>' +
         '<section><h2>Adım adım</h2><ol class="adimlar">' + g.adimlar.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ol></section>' +
-        '<section><h2>Bu promptu kopyala</h2>' + tahta(g.prompt) + '<p class="alt-not">Köşeli parantezli yerleri kendi dersine göre değiştir.</p></section>' +
+        promptBolumu +
         '<section><h2>Kullanmadan önce kontrol et</h2><ul class="kontrol">' + g.kontrol.map(function (x) { return '<li><label><input type="checkbox"><span>' + esc(x) + '</span></label></li>'; }).join('') + '</ul></section>' +
-        (diger.length ? '<section><h2>Bunlar da işine yarayabilir</h2><ul>' + diger.map(function (o) { return '<li><a href="#/gorev/' + esc(o.id) + '">' + esc(o.baslik) + '</a></li>'; }).join('') + '</ul></section>' : '') +
+        (diger.length ? '<section><h2>Diğer işler</h2><div class="diger-gorevler">' + diger.map(function (o) {
+          return '<a class="diger-cip" href="#/gorev/' + esc(o.id) + '"><span class="y-' + esc(o.kategori) + ' m-' + esc(o.id) + '">' + window.ikonCiz(o.ikon) + '</span>' + esc(o.baslik) + '</a>';
+        }).join('') + '</div></section>' : '') +
         '</div></div>'
     };
   }
@@ -326,7 +346,9 @@
 
         '<section class="bolum"><div class="bolum-bas"><h2>Hazır promptlar</h2><p>İşe göre seçip kopyala.</p></div><div class="kutuphane dar">' +
         GOREVLER.map(function (g) {
-          return '<div class="kutuphane-oge"><h3><a href="#/gorev/' + esc(g.id) + '">' + esc(g.baslik) + '</a></h3>' + tahta(g.prompt, katAd(g.kategori)) + '</div>';
+          var liste = (g.promptlar && g.promptlar.length) ? g.promptlar : [{ baslik: katAd(g.kategori), prompt: g.prompt }];
+          return '<div class="kutuphane-oge"><h3><a href="#/gorev/' + esc(g.id) + '">' + esc(g.baslik) + '</a></h3>' +
+            '<div class="prompt-yigin">' + liste.map(function (p) { return tahta(p.prompt, p.baslik || katAd(g.kategori)); }).join('') + '</div></div>';
         }).join('') + '</div></section></div>'
     };
   }

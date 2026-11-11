@@ -170,6 +170,7 @@
     if (ad === 'gorevler') veri = veri.map(function (g) {
       g = sadeNesne(g);
       if (g.araclar) g.araclar = g.araclar.map(sadeNesne).filter(function (a) { return a.id; });
+      if (g.promptlar) g.promptlar = g.promptlar.map(sadeNesne).filter(function (p) { return p.prompt; });
       return g;
     });
     return BASLIK[ad] + '\nwindow.' + DOSYA[ad].degisken + ' = ' + JSON.stringify(veri, null, 2) + ';\n';
@@ -720,16 +721,19 @@
       '<div class="p-baslik-satir"><h2>' + esc(g.baslik || 'Yeni görev') + '</h2>' +
       '<button class="dugme" type="button" data-eylem="gorev-bitti">Listeye dön</button></div>' +
       '<div class="alan-cift">' +
-      alan('Görev başlığı', y + '.baslik', { yerTutucu: 'Sınav ve soru hazırla' }) +
-      secim('Kategori', y + '.kategori', kategoriSecenekleri(), 'Kart sekmesinin rengi buna göre olur.') +
+      alan('Görev başlığı', y + '.baslik', { yerTutucu: 'Metin oluştur' }) +
+      alan('Kart alt başlığı', y + '.kisa', { yerTutucu: 'Soru, plan, hikâye, yazı', ipucu: 'Ana sayfadaki kartta başlığın altında görünür.' }) +
       '</div>' +
       '<div class="alan-cift">' +
+      secim('Kategori', y + '.kategori', kategoriSecenekleri(), 'Kart sekmesinin rengi buna göre olur.') +
       alan('Süre', y + '.sure', { yerTutucu: '10 dk' }) +
-      alan('Kimlik (id)', y + '.id', { ipucu: 'Bağlantıda görünür: #/gorev/' + esc(g.id) + '. Değiştirirsen eski bağlantı çalışmaz.' }) +
       '</div>' +
-      alan('Kısa özet', y + '.ozet', { satir: 2, yerTutucu: 'Kutucuğun üzerine gelince görünen tek cümle.' }) +
+      '<div class="alan-cift">' +
+      alan('Kimlik (id)', y + '.id', { ipucu: 'Bağlantıda görünür: #/gorev/' + esc(g.id) + '. Değiştirirsen eski bağlantı çalışmaz.' }) +
       secim('Yayın durumu', y + '.gizli', [['', 'Yayında'], ['1', 'Gizli']],
         'Gizli görev ana sayfada ve Prompt Atölyesi listesinde görünmez.', 'evet') +
+      '</div>' +
+      alan('Kısa özet', y + '.ozet', { satir: 2, yerTutucu: 'Kutucuğun üzerine gelince ve görev sayfasının başında görünen cümle.' }) +
       ikonSecici(y + '.ikon', g.ikon) +
       '</div>' +
 
@@ -743,7 +747,12 @@
 
       '<div class="p-kart"><h2>Adımlar ve prompt</h2>' +
       alan('Adımlar', y + '.adimlar', { tip: 'satirlar', satir: 7, ipucu: 'Her satıra bir adım. Sitede numaralı liste olur.' }) +
-      alan('Hazır prompt', y + '.prompt', { satir: 5, ipucu: 'Değişecek yerleri [köşeli parantez] içine yaz.' }) +
+      alan('Ana hazır prompt', y + '.prompt', { satir: 5, ipucu: 'Değişecek yerleri [köşeli parantez] içine yaz.' }) +
+      '<fieldset><legend>Hazır prompt şablonları (birden fazla iş için)</legend>' +
+      satirListesi(y + '.promptlar', [
+        { anahtar: 'baslik', yerTutucu: 'Örn: Sınav ve soru hazırla' },
+        { anahtar: 'prompt', yerTutucu: 'Prompt metni', satir: 3 }
+      ], 'Prompt şablonu ekle') + '</fieldset>' +
       alan('Göndermeden önce kontrol listesi', y + '.kontrol', { tip: 'satirlar', satir: 5, ipucu: 'Her satıra bir kontrol maddesi.' }) +
       '</div>' +
 
@@ -1496,8 +1505,8 @@
     if (eylem === 'gorev-yeni') {
       bolumAdi = 'gorevler';
       D.gorevler.push({
-        id: '', baslik: '', ikon: 'yildiz', kategori: Object.keys(D.site.kategoriler)[0] || 'metin',
-        sure: '10 dk', ozet: '', araclar: [], adimlar: [], prompt: '', kontrol: []
+        id: '', baslik: '', kisa: '', ikon: 'yildiz', kategori: Object.keys(D.site.kategoriler)[0] || 'metin',
+        sure: '10 dk', ozet: '', araclar: [], adimlar: [], prompt: '', promptlar: [], kontrol: []
       });
       duzenGorev = '*yeni*';
       kirlet('gorevler');
@@ -1696,6 +1705,7 @@
       return false;
     }
     g.araclar = (g.araclar || []).filter(function (x) { return x.id; });
+    if (g.promptlar) g.promptlar = g.promptlar.filter(function (p) { return kirp(p.prompt); });
     kirlet('gorevler');
     return true;
   }
