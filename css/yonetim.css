@@ -129,6 +129,7 @@ table.p-tablo .sag { text-align: right; white-space: nowrap; }
 }
 .satir.ikili { grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr) auto; }
 .satir.tekli { grid-template-columns: minmax(0, 1fr) auto; }
+.satir.dortlu { grid-template-columns: 64px minmax(140px, .9fr) minmax(0, 1.5fr) minmax(120px, .7fr) auto; }
 .satir .girdi { margin: 0; }
 .ekle-satir { margin-top: 10px; }
 .yardim { font-size: .84rem; color: var(--soluk); margin: 4px 0 10px; line-height: 1.45; }

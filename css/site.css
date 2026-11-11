@@ -44,6 +44,7 @@
 }
 
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
 html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
 body {
   margin: 0;
@@ -124,6 +125,19 @@ li::marker { color: var(--soluk); }
   grid-template-columns: minmax(0, 1.12fr) minmax(320px, .88fr);
   gap: 36px;
   align-items: center;
+}
+.defter-ic.tek-sutun {
+  grid-template-columns: 1fr;
+}
+.cam-kapali .ust,
+.cam-kapali .sekmeli-ic,
+.cam-kapali .is-kart,
+.cam-kapali .vitrin-slayt,
+.cam-kapali .yeni-serit,
+.cam-kapali .ara-form,
+.cam-kapali .sayi-cip {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
 }
 .ust-etiket {
   display: inline-flex; align-items: center; gap: 8px;

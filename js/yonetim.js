@@ -52,6 +52,110 @@
     yonetici: kopya(window.YONETICI) || {}
   };
 
+  function siteVarsayilanlariTamamla(s) {
+    if (!s) return;
+    if (!Array.isArray(s.menu) || !s.menu.length) {
+      s.menu = [
+        { id: 'gorev', ad: 'Görevler', adres: '#/', durum: 'acik' },
+        { id: 'araclar', ad: 'Araçlar', adres: '#/araclar', durum: 'acik' },
+        { id: 'prompt', ad: 'Prompt Atölyesi', adres: '#/prompt', durum: 'acik' },
+        { id: 'guvenli', ad: 'Güvenli Kullanım', adres: '#/guvenli', durum: 'acik' },
+        { id: 'baslangic', ad: 'Yeni Başlayanlar', adres: '#/baslangic', durum: 'acik' }
+      ];
+    }
+    s.gorunum = Object.assign({
+      aiArkaplan: 'acik',
+      aiYogunluk: 'normal',
+      camEfekt: 'acik',
+      ustMenu: 'acik',
+      altBilgi: 'acik',
+      altPanelBaglanti: 'acik',
+      altPanelYazi: 'Yönetim paneli',
+      altNot: ''
+    }, s.gorunum || {});
+    s.anasayfa = Object.assign({
+      sira: ['defter', 'serit', 'gorevler', 'aliskanliklar'],
+      defterAcik: 'acik',
+      ustEtiketAcik: 'acik',
+      ustEtiket: '',
+      baslik: 'Bugün ne hazırlıyorsun?',
+      giris: 'Yapacağın işi seç. Hangi yapay zekâyı açacağını, ne yazacağını ve neyi kontrol edeceğini adım adım gösterelim.',
+      aramaAcik: 'acik',
+      aramaYerTutucu: 'Araç ya da iş ara: sınav, şarkı, Gemini…',
+      aramaDugme: 'Ara',
+      sayilarAcik: 'acik',
+      slaytAcik: 'acik',
+      slaytEtiket: 'ÖNE ÇIKAN ARAÇ',
+      slaytKutuBaslik: '✦ Sınıfta ne işe yarar?',
+      slaytBaglantiYazi: 'Rehberi ve promptu aç',
+      seritAcik: 'acik',
+      seritEtiket: 'Vitrin & Yeni Araçlar',
+      gorevlerAcik: 'acik',
+      gorevlerBaslik: 'Yapacağın işi seç',
+      gorevlerBaglantiAcik: 'acik',
+      gorevlerBaglantiYazi: 'Tüm araçları gör',
+      aliskanliklarAcik: 'acik',
+      aliskanliklarBaslik: 'Araçtan önce üç alışkanlık',
+      aliskanliklar: [
+        { no: '1', baslik: 'Aracın türünü bil', metin: 'Metinden görsele, görselden videoya: işin için doğru türü seç.', adres: '#/baslangic' },
+        { no: '2', baslik: 'İyi prompt yaz', metin: 'Sınıf düzeyini, amacı ve biçimi söyle. Atölyede hazır formülle dene.', adres: '#/prompt' },
+        { no: '3', baslik: 'Çıktıyı kontrol et', metin: 'Yapay zekâ yanılabilir. Öğrenci bilgisi girme, sonucu sınıfa götürmeden doğrula.', adres: '#/guvenli' }
+      ]
+    }, s.anasayfa || {});
+    if (!Array.isArray(s.anasayfa.sira) || !s.anasayfa.sira.length) {
+      s.anasayfa.sira = ['defter', 'serit', 'gorevler', 'aliskanliklar'];
+    }
+    s.sayfalar = s.sayfalar || {};
+    s.sayfalar.araclar = Object.assign({
+      baslik: 'Araç rehberi',
+      giris: 'Ücreti, yaş sınırı ve öğretmene faydası bir bakışta. Bir araca tıklayınca hazır prompt ve dikkat edilecekleri görürsün.',
+      aramaAcik: 'acik',
+      aramaYerTutucu: 'Ara: sunum, seslendirme, Kahoot…',
+      kategoriFiltreAcik: 'acik',
+      ucretFiltreAcik: 'acik',
+      kapananAcik: 'acik'
+    }, s.sayfalar.araclar || {});
+    s.sayfalar.prompt = Object.assign({
+      baslik: 'Prompt Atölyesi',
+      giris: 'Prompt, yapay zekâya ne istediğini anlatan yönergedir. Ne kadar açık yazarsan sonuç o kadar işine yarar: iyi bir prompt, yeni bir öğretmen stajyere verilen iyi bir talimat gibidir.',
+      kiyasAcik: 'acik',
+      kiyasBaslik: 'Aynı istek, iki farklı sonuç',
+      formulAcik: 'acik',
+      formulBaslik: 'Güçlü promptun beş parçası',
+      atolyeAcik: 'acik',
+      atolyeBaslik: 'Kendi promptunu oluştur',
+      atolyeAlt: 'Formu doldur, prompt yanda yazılsın. Kopyala ve istediğin yapay zekâya yapıştır.',
+      hazirAcik: 'acik',
+      hazirBaslik: 'Hazır promptlar',
+      hazirAlt: 'İşe göre seçip kopyala.'
+    }, s.sayfalar.prompt || {});
+    s.sayfalar.guvenli = Object.assign({
+      baslik: 'Güvenli kullanım',
+      yapYapmaAcik: 'acik',
+      yapmaBaslik: 'Yapay zekâya girme',
+      yapBaslik: 'Bunun yerine',
+      ilkelerAcik: 'acik',
+      ilkelerBaslik: 'Beş temel ilke',
+      kontrolAcik: 'acik',
+      kontrolBaslik: 'Sınıfa götürmeden önce',
+      yasAcik: 'acik',
+      yasBaslik: 'Araçların yaş sınırları',
+      kaynaklarAcik: 'acik',
+      kaynaklarBaslik: 'Resmî kaynaklar'
+    }, s.sayfalar.guvenli || {});
+    s.sayfalar.baslangic = Object.assign({
+      baslik: 'Yapay zekâya yeni mi başlıyorsun?',
+      adimlarAcik: 'acik',
+      adimlarBaslik: 'İlk 30 dakikan',
+      turlerAcik: 'acik',
+      turlerBaslik: 'Yapay zekâ türleri',
+      turlerAlt: 'Tür, verdiğin şey ile aldığın şeye göre adlandırılır.',
+      terimlerAcik: 'acik',
+      terimlerBaslik: 'Sık duyacağın kelimeler'
+    }, s.sayfalar.baslangic || {});
+  }
+  siteVarsayilanlariTamamla(D.site);
+
   var degisen = {};
   var sunucuVar = false;
   var anahtar = null;
@@ -263,6 +367,7 @@
 
   var BOLUMLER = [
     { ad: 'panel', baslik: 'Panel', im: '▦' },
+    { ad: 'yerlesim', baslik: 'Sayfalar ve yerleşim', im: '⊞' },
     { ad: 'araclar', baslik: 'Araçlar', im: '✦', say: function () { return D.araclar.length; } },
     { ad: 'gorseller', baslik: 'Görseller', im: '▣', say: function () { return logolu(); } },
     { ad: 'gorevler', baslik: 'Görev rehberleri', im: '☰', say: function () { return D.gorevler.length; } },
@@ -455,6 +560,7 @@
       '<p class="tanim">Sık yapılan işler için kısa yollar.</p>' +
       '<div class="dugmeler" style="margin-top:0">' +
       '<button class="dugme" type="button" data-eylem="arac-yeni">+ Yeni araç ekle</button>' +
+      '<button class="dugme ikincil" type="button" data-bolum="yerlesim">Sayfalar ve yerleşim</button>' +
       '<button class="dugme ikincil" type="button" data-bolum="gorseller">Görsel yükle</button>' +
       '<button class="dugme ikincil" type="button" data-bolum="tema">Renkleri değiştir</button>' +
       '<button class="dugme ikincil" type="button" data-bolum="gorevler">Görev rehberi düzenle</button>' +
@@ -975,7 +1081,217 @@
       '<label>' + esc(etiket) + '<small>--' + esc(ad) + '</small></label></div>';
   }
 
-  /* ===================== 13. Bölüm: Site ayarları ===================== */
+  /* ===================== 13. Bölüm: Sayfalar ve yerleşim ===================== */
+
+  var ANASAYFA_BLOK_ADLARI = {
+    defter: { ad: 'Kahraman Alanı & 3B Vitrin Slaytı', acikAnahtar: 'defterAcik', aciklama: 'Üst karşılama başlığı, arama kutusu, istatistikler ve sağdaki 3B vitrin slaytı.' },
+    serit: { ad: 'Kayan Vitrin & Yeni Araçlar Şeridi', acikAnahtar: 'seritAcik', aciklama: 'Öne çıkan araçların sonsuz kayan rozet şeridi.' },
+    gorevler: { ad: 'Yapacağın İşi Seç (7 Ana Kategori)', acikAnahtar: 'gorevlerAcik', aciklama: 'Öğretmenlerin işe göre seçim yaptığı 7 ana kategori kartı.' },
+    aliskanliklar: { ad: 'Araçtan Önce Üç Alışkanlık', acikAnahtar: 'aliskanliklarAcik', aciklama: 'Sayfa altındaki 1-2-3 numaralı rehber kartları.' }
+  };
+
+  CIZERLER.yerlesim = function () {
+    siteVarsayilanlariTamamla(D.site);
+    var acKapa = [['acik', 'Açık (Göster)'], ['kapali', 'Kapalı (Gizle)']];
+    var sira = D.site.anasayfa.sira || ['defter', 'serit', 'gorevler', 'aliskanliklar'];
+    var menuListesi = D.site.menu || [];
+
+    return '<div class="p-kart">' +
+      '<h2>Genel görünüm, AI arka plan ve çerçeve ayarları</h2>' +
+      '<p class="tanim">Sitenin arka planındaki hareketli yapay zekâ veri çiplerini, buzlu cam (glassmorphism) efektini, üst menüyü ve alt bilgiyi buradan açıp kapatabilirsin.</p>' +
+      '<div class="alan-uc">' +
+      secim('AI veri çipleri arka planı', 'site.gorunum.aiArkaplan', acKapa, 'Tüm site arka planında süzülen şeffaf veri çipleri ve devre çizgileri.') +
+      secim('AI arka plan yoğunluğu', 'site.gorunum.aiYogunluk', [['hafif', 'Hafif (Az sayıda çip)'], ['normal', 'Normal (Dengeli)'], ['yogun', 'Yoğun (Daha çok çip)']], 'Arka plandaki veri çipi ve hat sayısı.') +
+      secim('Buzlu cam (glass) efekti', 'site.gorunum.camEfekt', acKapa, 'Kartlarda ve üst menüde yarı saydam buzlu cam görünümü.') +
+      '</div>' +
+      '<div class="alan-uc">' +
+      secim('Üst menü çubuğu', 'site.gorunum.ustMenu', acKapa, 'Sitenin en üstündeki logo ve menü şeridi.') +
+      secim('Alt bilgi (footer) alanı', 'site.gorunum.altBilgi', acKapa, 'Sayfanın en altındaki kurum ve açıklama şeridi.') +
+      secim('Alt bilgide yönetim bağlantısı', 'site.gorunum.altPanelBaglanti', acKapa, 'Alt bilgideki sağ köşe "Yönetim paneli" düğmesi.') +
+      '</div>' +
+      '<div class="alan-cift">' +
+      alan('Yönetim paneli düğme yazısı', 'site.gorunum.altPanelYazi', { yerTutucu: 'Yönetim paneli' }) +
+      alan('Alt bilgi açıklama metni', 'site.gorunum.altNot', { satir: 2, yerTutucu: 'Boş bırakırsan araçların son kontrol tarihiyle otomatik oluşturulur.' }) +
+      '</div></div>' +
+
+      '<div class="p-kart">' +
+      '<div class="p-baslik-satir"><h2>Üst menü bağlantıları ve sıralaması</h2>' +
+      '<button class="mini" type="button" data-eylem="menu-ekle">+ Menü öğesi ekle</button></div>' +
+      '<p class="tanim">Üst menüde hangi sayfaların hangi sırayla görüneceğini, adlarını ve açık/kapalı durumlarını buradan yönetebilirsin.</p>' +
+      '<table class="p-tablo"><thead><tr><th>Menü adı</th><th>Bağlantı adresi</th><th>Durum</th><th class="sag">Sıra / İşlem</th></tr></thead><tbody>' +
+      menuListesi.map(function (m, i) {
+        var kapaliMi = m.durum === 'kapali';
+        return '<tr' + (kapaliMi ? ' class="satir-gizli"' : '') + '>' +
+          '<td><input class="girdi" data-yol="site.menu.' + i + '.ad" value="' + esc(m.ad || '') + '" placeholder="Menü adı"></td>' +
+          '<td><input class="girdi" data-yol="site.menu.' + i + '.adres" value="' + esc(m.adres || '#/') + '" placeholder="#/araclar"></td>' +
+          '<td style="width:170px"><select class="girdi" data-yol="site.menu.' + i + '.durum">' +
+          '<option value="acik"' + (!kapaliMi ? ' selected' : '') + '>Açık (Göster)</option>' +
+          '<option value="kapali"' + (kapaliMi ? ' selected' : '') + '>Kapalı (Gizle)</option>' +
+          '</select></td>' +
+          '<td class="sag"><span class="mini-grup">' +
+          '<button class="mini" type="button" data-eylem="menu-tasi" data-i="' + i + '" data-yon="-1"' + (i === 0 ? ' disabled' : '') + ' title="Yukarı taşı">↑</button>' +
+          '<button class="mini" type="button" data-eylem="menu-tasi" data-i="' + i + '" data-yon="1"' + (i === menuListesi.length - 1 ? ' disabled' : '') + ' title="Aşağı taşı">↓</button>' +
+          '<button class="mini sil" type="button" data-eylem="menu-sil" data-i="' + i + '"' + (menuListesi.length <= 1 ? ' disabled' : '') + ' title="Sil">Sil</button>' +
+          '</span></td></tr>';
+      }).join('') +
+      '</tbody></table></div>' +
+
+      '<div class="p-kart">' +
+      '<h2>Ana sayfa bölüm yerleşimi (sıralama ve aç/kapa)</h2>' +
+      '<p class="tanim">Ana sayfadaki 4 ana bölümün yukarıdan aşağıya görünme sırasını <b>↑ / ↓</b> oklarıyla değiştirebilir veya istediğin bölümü kapatabilirsin.</p>' +
+      '<table class="p-tablo"><thead><tr><th>Bölüm</th><th class="gizle-kucuk">Açıklama</th><th style="width:180px">Durum</th><th class="sag">Sıra</th></tr></thead><tbody>' +
+      sira.map(function (k, i) {
+        var b = ANASAYFA_BLOK_ADLARI[k] || { ad: k, acikAnahtar: k + 'Acik', aciklama: '' };
+        var d = D.site.anasayfa[b.acikAnahtar];
+        var kapaliMi = d === 'kapali';
+        return '<tr' + (kapaliMi ? ' class="satir-gizli"' : '') + '>' +
+          '<td><b>' + (i + 1) + '. ' + esc(b.ad) + '</b></td>' +
+          '<td class="gizle-kucuk"><small style="color:var(--soluk)">' + esc(b.aciklama) + '</small></td>' +
+          '<td><select class="girdi" data-yol="site.anasayfa.' + esc(b.acikAnahtar) + '">' +
+          '<option value="acik"' + (!kapaliMi ? ' selected' : '') + '>Açık (Göster)</option>' +
+          '<option value="kapali"' + (kapaliMi ? ' selected' : '') + '>Kapalı (Gizle)</option>' +
+          '</select></td>' +
+          '<td class="sag"><span class="mini-grup">' +
+          '<button class="mini" type="button" data-eylem="anasayfa-tasi" data-i="' + i + '" data-yon="-1"' + (i === 0 ? ' disabled' : '') + ' title="Yukarı taşı">↑</button>' +
+          '<button class="mini" type="button" data-eylem="anasayfa-tasi" data-i="' + i + '" data-yon="1"' + (i === sira.length - 1 ? ' disabled' : '') + ' title="Aşağı taşı">↓</button>' +
+          '</span></td></tr>';
+      }).join('') +
+      '</tbody></table></div>' +
+
+      '<div class="p-kart">' +
+      '<h2>Ana sayfa metinleri ve alt parçaları</h2>' +
+      '<p class="tanim">Kahraman alanındaki yazıları, arama kutusunu, istatistik kapsüllerini, sağdaki 3B vitrin slaytını ve alt bölüm başlıklarını düzenle.</p>' +
+      '<div class="alan-cift">' +
+      secim('Üst rozet (okul etiketi)', 'site.anasayfa.ustEtiketAcik', acKapa) +
+      alan('Üst rozet özel metni', 'site.anasayfa.ustEtiket', { yerTutucu: 'Boş bırakılırsa okul adı görünür' }) +
+      '</div>' +
+      '<div class="alan-cift">' +
+      alan('Ana sayfa büyük başlık (H1)', 'site.anasayfa.baslik', { yerTutucu: 'Bugün ne hazırlıyorsun?' }) +
+      alan('Giriş açıklaması', 'site.anasayfa.giris', { satir: 2 }) +
+      '</div>' +
+      '<div class="alan-uc">' +
+      secim('Arama çubuğu', 'site.anasayfa.aramaAcik', acKapa) +
+      alan('Arama kutusu ipucu yazısı', 'site.anasayfa.aramaYerTutucu') +
+      alan('Arama düğmesi yazısı', 'site.anasayfa.aramaDugme') +
+      '</div>' +
+      '<div class="alan-cift">' +
+      secim('İstatistik kapsülleri (araç/kategori/prompt sayısı)', 'site.anasayfa.sayilarAcik', acKapa) +
+      secim('Sağdaki 3B vitrin slaytı', 'site.anasayfa.slaytAcik', acKapa, 'Kapatılırsa sol başlık alanı tam genişlik olur.') +
+      '</div>' +
+      '<div class="alan-uc">' +
+      alan('Slayt üst rozet yazısı', 'site.anasayfa.slaytEtiket', { yerTutucu: 'ÖNE ÇIKAN ARAÇ' }) +
+      alan('Slayt ipucu kutusu başlığı', 'site.anasayfa.slaytKutuBaslik', { yerTutucu: '✦ Sınıfta ne işe yarar?' }) +
+      alan('Slayt alt bağlantı yazısı', 'site.anasayfa.slaytBaglantiYazi', { yerTutucu: 'Rehberi ve promptu aç' }) +
+      '</div>' +
+      '<div class="alan-uc">' +
+      alan('Kayan şerit sol etiket yazısı', 'site.anasayfa.seritEtiket', { yerTutucu: 'Vitrin & Yeni Araçlar' }) +
+      alan('Görevler bölümü başlığı', 'site.anasayfa.gorevlerBaslik', { yerTutucu: 'Yapacağın işi seç' }) +
+      secim('Görevler sağ "Tüm araçları gör" bağlantısı', 'site.anasayfa.gorevlerBaglantiAcik', acKapa) +
+      '</div>' +
+      '<div class="alan-cift">' +
+      alan('Görevler sağ bağlantı yazısı', 'site.anasayfa.gorevlerBaglantiYazi', { yerTutucu: 'Tüm araçları gör' }) +
+      alan('Alışkanlıklar bölümü başlığı', 'site.anasayfa.aliskanliklarBaslik', { yerTutucu: 'Araçtan önce üç alışkanlık' }) +
+      '</div>' +
+      '<fieldset><legend>Üç alışkanlık kartları (numara, başlık, açıklama ve bağlantı)</legend>' +
+      satirListesi('site.anasayfa.aliskanliklar', [
+        { anahtar: 'no', yerTutucu: '1' },
+        { anahtar: 'baslik', yerTutucu: 'Başlık' },
+        { anahtar: 'metin', yerTutucu: 'Kısa açıklama' },
+        { anahtar: 'adres', yerTutucu: '#/baslangic' }
+      ], 'Kart ekle', 'dortlu') + '</fieldset>' +
+      '</div>' +
+
+      '<div class="p-kart">' +
+      '<h2>"Araçlar" sayfası metinleri ve filtre aç/kapa ayarları</h2>' +
+      '<div class="alan-cift">' +
+      alan('Sayfa başlığı', 'site.sayfalar.araclar.baslik') +
+      alan('Giriş metni', 'site.sayfalar.araclar.giris', { satir: 2 }) +
+      '</div>' +
+      '<div class="alan-cift">' +
+      secim('Arama kutusu', 'site.sayfalar.araclar.aramaAcik', acKapa) +
+      alan('Arama kutusu ipucu yazısı', 'site.sayfalar.araclar.aramaYerTutucu') +
+      '</div>' +
+      '<div class="alan-uc">' +
+      secim('Kategori filtre çipleri', 'site.sayfalar.araclar.kategoriFiltreAcik', acKapa) +
+      secim('Ücret filtre çipleri', 'site.sayfalar.araclar.ucretFiltreAcik', acKapa) +
+      secim('Kapanan araçlar alt kutusu', 'site.sayfalar.araclar.kapananAcik', acKapa) +
+      '</div></div>' +
+
+      '<div class="p-kart">' +
+      '<h2>"Prompt Atölyesi" sayfası metinleri ve bölüm aç/kapa ayarları</h2>' +
+      '<div class="alan-cift">' +
+      alan('Sayfa başlığı', 'site.sayfalar.prompt.baslik') +
+      alan('Giriş metni', 'site.sayfalar.prompt.giris', { satir: 2 }) +
+      '</div>' +
+      '<div class="alan-cift">' +
+      secim('Zayıf / Güçlü prompt karşılaştırma bölümü', 'site.sayfalar.prompt.kiyasAcik', acKapa) +
+      alan('Karşılaştırma bölümü başlığı', 'site.sayfalar.prompt.kiyasBaslik') +
+      '</div>' +
+      '<div class="alan-cift">' +
+      secim('Güçlü promptun 5 parçası bölümü', 'site.sayfalar.prompt.formulAcik', acKapa) +
+      alan('5 parça bölümü başlığı', 'site.sayfalar.prompt.formulBaslik') +
+      '</div>' +
+      '<div class="alan-uc">' +
+      secim('İnteraktif "Kendi promptunu oluştur" aracı', 'site.sayfalar.prompt.atolyeAcik', acKapa) +
+      alan('Oluşturucu başlığı', 'site.sayfalar.prompt.atolyeBaslik') +
+      alan('Oluşturucu alt açıklaması', 'site.sayfalar.prompt.atolyeAlt') +
+      '</div>' +
+      '<div class="alan-uc">' +
+      secim('Hazır promptlar kütüphanesi bölümü', 'site.sayfalar.prompt.hazirAcik', acKapa) +
+      alan('Hazır promptlar başlığı', 'site.sayfalar.prompt.hazirBaslik') +
+      alan('Hazır promptlar alt yazısı', 'site.sayfalar.prompt.hazirAlt') +
+      '</div></div>' +
+
+      '<div class="p-kart">' +
+      '<h2>"Güvenli Kullanım" sayfası başlıkları ve bölüm aç/kapa ayarları</h2>' +
+      '<p class="tanim">Bölümlerin görünürlüğünü ve başlıklarını buradan, içindeki maddeleri ise <button class="mini" type="button" data-bolum="rehber">Rehber metinleri</button> bölümünden düzenleyebilirsin.</p>' +
+      '<div class="alan-cift">' +
+      alan('Sayfa başlığı', 'site.sayfalar.guvenli.baslik') +
+      secim('Yap / Yapma karşılaştırma kutuları', 'site.sayfalar.guvenli.yapYapmaAcik', acKapa) +
+      '</div>' +
+      '<div class="alan-cift">' +
+      alan('Sol kutu başlığı (Yapma)', 'site.sayfalar.guvenli.yapmaBaslik') +
+      alan('Sağ kutu başlığı (Yap)', 'site.sayfalar.guvenli.yapBaslik') +
+      '</div>' +
+      '<div class="alan-cift">' +
+      secim('Temel ilkeler bölümü', 'site.sayfalar.guvenli.ilkelerAcik', acKapa) +
+      alan('Temel ilkeler başlığı', 'site.sayfalar.guvenli.ilkelerBaslik') +
+      '</div>' +
+      '<div class="alan-cift">' +
+      secim('Sınıfa götürmeden önce kontrol listesi', 'site.sayfalar.guvenli.kontrolAcik', acKapa) +
+      alan('Kontrol listesi başlığı', 'site.sayfalar.guvenli.kontrolBaslik') +
+      '</div>' +
+      '<div class="alan-cift">' +
+      secim('Araçların yaş sınırları tablosu', 'site.sayfalar.guvenli.yasAcik', acKapa) +
+      alan('Yaş sınırları başlığı', 'site.sayfalar.guvenli.yasBaslik') +
+      '</div>' +
+      '<div class="alan-cift">' +
+      secim('Resmî kaynaklar bölümü', 'site.sayfalar.guvenli.kaynaklarAcik', acKapa) +
+      alan('Resmî kaynaklar başlığı', 'site.sayfalar.guvenli.kaynaklarBaslik') +
+      '</div></div>' +
+
+      '<div class="p-kart">' +
+      '<h2>"Yeni Başlayanlar" sayfası başlıkları ve bölüm aç/kapa ayarları</h2>' +
+      '<p class="tanim">Bölümlerin görünürlüğünü ve başlıklarını buradan, adım ve terim içeriklerini ise <button class="mini" type="button" data-bolum="rehber">Rehber metinleri</button> bölümünden düzenleyebilirsin.</p>' +
+      '<div class="alan-cift">' +
+      alan('Sayfa başlığı', 'site.sayfalar.baslangic.baslik') +
+      secim('İlk 30 dakikan (adımlar ve ilk prompt) bölümü', 'site.sayfalar.baslangic.adimlarAcik', acKapa) +
+      '</div>' +
+      '<div class="alan-cift">' +
+      alan('İlk 30 dakikan başlığı', 'site.sayfalar.baslangic.adimlarBaslik') +
+      secim('Yapay zekâ türleri bölümü', 'site.sayfalar.baslangic.turlerAcik', acKapa) +
+      '</div>' +
+      '<div class="alan-cift">' +
+      alan('Yapay zekâ türleri başlığı', 'site.sayfalar.baslangic.turlerBaslik') +
+      alan('Yapay zekâ türleri alt açıklaması', 'site.sayfalar.baslangic.turlerAlt') +
+      '</div>' +
+      '<div class="alan-cift">' +
+      secim('Sık duyacağın kelimeler (sözlük) bölümü', 'site.sayfalar.baslangic.terimlerAcik', acKapa) +
+      alan('Sözlük bölümü başlığı', 'site.sayfalar.baslangic.terimlerBaslik') +
+      '</div></div>';
+  };
+
+  /* ===================== 14. Bölüm: Site ayarları ===================== */
 
   CIZERLER.ayarlar = function () {
     return '<div class="p-kart"><h2>Site kimliği</h2>' +
@@ -1595,6 +1911,30 @@
       return;
     }
 
+    /* --- Sayfalar ve yerleşim --- */
+    if (eylem === 'menu-tasi') {
+      tasi(D.site.menu, i, Number(d.getAttribute('data-yon')), 'site');
+      return;
+    }
+    if (eylem === 'menu-ekle') {
+      D.site.menu = D.site.menu || [];
+      D.site.menu.push({ id: 'menu-' + (D.site.menu.length + 1), ad: 'Yeni Sayfa', adres: '#/', durum: 'acik' });
+      kirlet('site');
+      ciz();
+      return;
+    }
+    if (eylem === 'menu-sil') {
+      if (!D.site.menu || D.site.menu.length <= 1) return;
+      D.site.menu.splice(i, 1);
+      kirlet('site');
+      ciz();
+      return;
+    }
+    if (eylem === 'anasayfa-tasi') {
+      tasi(D.site.anasayfa.sira, i, Number(d.getAttribute('data-yon')), 'site');
+      return;
+    }
+
     /* --- Ayarlar --- */
     if (eylem === 'kat-ekle') { kategoriEkle(); return; }
     if (eylem === 'kat-sil') {
@@ -1782,6 +2122,7 @@
     Object.keys(DOSYA).forEach(function (k) {
       if (taslak.degisen[k] && taslak.veri[k] !== undefined) D[k] = taslak.veri[k];
     });
+    siteVarsayilanlariTamamla(D.site);
     degisen = taslak.degisen;
     if (kirliMi()) {
       window.temaUygula(D.tema);
