@@ -89,16 +89,114 @@
   }
 
   /* Panelde "yeni eklendi" işaretlenen araçlar, kahraman bölümünün hemen
-     altında küçük bir şeritte sırayla belirir. */
+     altında sonsuz kayan premium bir vitrin şeridinde süzülür. */
   function yeniSerit() {
-    var yeniler = aktif.filter(function (a) { return a.vitrin; }).slice(0, 10);
-    if (!yeniler.length) return '';
-    return '<section class="yeni-serit"><div class="kap"><div class="yeni-ic">' +
-      '<span class="yeni-etiket">Yeni eklendi</span>' +
-      '<ul class="yeni-liste">' + yeniler.map(function (a, i) {
-        return '<li style="--s:' + i + '"><a class="yeni-rozet" href="#/arac/' + esc(a.id) + '">' +
-          logoKutu(a, 'mini') + esc(a.ad) + '</a></li>';
-      }).join('') + '</ul></div></div></section>';
+    var vitrin = aktif.filter(function (a) { return a.vitrin; });
+    var liste = vitrin.length >= 6 ? vitrin.slice(0, 12) : vitrin.concat(aktif.filter(function (a) { return !a.vitrin; })).slice(0, 10);
+    if (!liste.length) return '';
+    var ikili = liste.concat(liste);
+    return '<section class="yeni-serit" aria-label="Öne çıkan araçlar şeridi"><div class="kap"><div class="yeni-ic">' +
+      '<span class="yeni-etiket"><i></i>Vitrin &amp; Yeni Araçlar</span>' +
+      '<div class="yeni-pencere"><ul class="yeni-liste">' + ikili.map(function (a, i) {
+        var k = a.kategori[0];
+        return '<li style="--s:' + (i % liste.length) + '" aria-hidden="' + (i >= liste.length) + '">' +
+          '<a class="yeni-rozet" href="#/arac/' + esc(a.id) + '" tabindex="' + (i >= liste.length ? '-1' : '0') + '">' +
+          logoKutu(a, 'mini') +
+          '<span class="yeni-rozet-ad">' + esc(a.ad) + '</span>' +
+          '<span class="yeni-rozet-kat y-' + esc(k) + '">' + esc(a.alt || katAd(k)) + '</span>' +
+          '</a></li>';
+      }).join('') + '</ul></div></div></div></section>';
+  }
+
+  /* Kahraman (hero) bölümünün sağ tarafındaki interaktif 3B cam slayt vitrini. */
+  var slaytZaman = null;
+  var slaytIndeks = 0;
+
+  function vitrinSlaytListe() {
+    var sec = aktif.filter(function (a) { return a.vitrin; });
+    if (sec.length < 4) {
+      sec = sec.concat(aktif.filter(function (a) { return !a.vitrin; })).slice(0, 6);
+    }
+    return sec.slice(0, 6);
+  }
+
+  function vitrinSlayt() {
+    var slaytlar = vitrinSlaytListe();
+    if (!slaytlar.length) return '';
+    return '<div class="vitrin-sahne" id="vitrin-sahne" aria-roledescription="carousel" aria-label="Öne çıkan yapay zekâ araçları">' +
+      '<div class="vitrin-kartlar">' +
+      slaytlar.map(function (a, i) {
+        var k = a.kategori[0];
+        var ipucu = (a.neIcin && a.neIcin[0]) ? a.neIcin[0] : a.ozet;
+        var no = (i + 1 < 10 ? '0' : '') + (i + 1) + ' / ' + (slaytlar.length < 10 ? '0' : '') + slaytlar.length;
+        return '<article class="vitrin-slayt' + (i === 0 ? ' aktif' : (i === 1 ? ' sonraki' : '')) + '" data-slayt="' + i + '" aria-hidden="' + (i !== 0) + '">' +
+          '<div class="vitrin-ust">' +
+          '<span class="vitrin-cip"><span class="nokta"></span>ÖNE ÇIKAN ARAÇ</span>' +
+          '<span class="vitrin-kat r-' + esc(k) + '">' + esc(a.alt || katAd(k)) + '</span>' +
+          '<span class="vitrin-no">' + no + '</span>' +
+          '</div>' +
+          '<div class="vitrin-bas">' +
+          logoKutu(a, 'buyuk') +
+          '<div class="vitrin-bas-yazi">' +
+          '<h3><a href="#/arac/' + esc(a.id) + '">' + esc(a.ad) + '</a></h3>' +
+          '<div class="rozetler">' + ucretRozet(a) + (a.yeni ? '<span class="rozet yeni">Öğretmene özel</span>' : '') + '</div>' +
+          '</div></div>' +
+          '<p class="vitrin-ozet">' + esc(a.ozet) + '</p>' +
+          '<div class="vitrin-kutu"><span class="vitrin-kutu-etiket">✦ Sınıfta ne işe yarar?</span><p>' + esc(ipucu) + '</p></div>' +
+          '<div class="vitrin-alt">' +
+          '<a class="vitrin-bag" href="#/arac/' + esc(a.id) + '">Rehberi ve promptu aç <span aria-hidden="true">→</span></a>' +
+          (a.url ? '<a class="vitrin-dis" href="' + esc(guvenliUrl(a.url)) + '" target="_blank" rel="noopener">Site ↗</a>' : '') +
+          '</div></article>';
+      }).join('') +
+      '</div>' +
+      '<div class="vitrin-cubuk">' +
+      '<button type="button" class="vitrin-ok" data-slayt-yon="-1" aria-label="Önceki araç">‹</button>' +
+      '<div class="vitrin-noktalar" role="tablist">' +
+      slaytlar.map(function (a, i) {
+        return '<button type="button" class="vitrin-nokta' + (i === 0 ? ' aktif' : '') + '" data-slayt-git="' + i + '" aria-label="' + esc(a.ad) + '"><span class="vitrin-dolum"></span></button>';
+      }).join('') +
+      '</div>' +
+      '<button type="button" class="vitrin-ok" data-slayt-yon="1" aria-label="Sonraki araç">›</button>' +
+      '</div></div>';
+  }
+
+  function slaytGuncelle(yeniIndeks) {
+    var sahne = document.getElementById('vitrin-sahne');
+    if (!sahne) return;
+    var kartlar = sahne.querySelectorAll('.vitrin-slayt');
+    var noktalar = sahne.querySelectorAll('.vitrin-nokta');
+    var toplam = kartlar.length;
+    if (!toplam) return;
+    slaytIndeks = ((yeniIndeks % toplam) + toplam) % toplam;
+    var sonraki = (slaytIndeks + 1) % toplam;
+    var onceki = (slaytIndeks - 1 + toplam) % toplam;
+    kartlar.forEach(function (k, i) {
+      k.classList.toggle('aktif', i === slaytIndeks);
+      k.classList.toggle('sonraki', i === sonraki && toplam > 1);
+      k.classList.toggle('onceki', i === onceki && toplam > 2);
+      k.setAttribute('aria-hidden', String(i !== slaytIndeks));
+    });
+    noktalar.forEach(function (n, i) {
+      n.classList.toggle('aktif', i === slaytIndeks);
+    });
+  }
+
+  function slaytBaslat() {
+    clearInterval(slaytZaman);
+    slaytIndeks = 0;
+    var sahne = document.getElementById('vitrin-sahne');
+    if (!sahne) return;
+    function kur() {
+      clearInterval(slaytZaman);
+      slaytZaman = setInterval(function () {
+        if (!document.hidden && document.getElementById('vitrin-sahne')) {
+          slaytGuncelle(slaytIndeks + 1);
+        }
+      }, 4800);
+    }
+    kur();
+    sahne.addEventListener('mouseenter', function () { clearInterval(slaytZaman); sahne.classList.add('duraklat'); });
+    sahne.addEventListener('mouseleave', function () { sahne.classList.remove('duraklat'); kur(); });
   }
 
   /* ---------- Sayfalar ---------- */
@@ -111,13 +209,20 @@
     return {
       baslik: '',
       nav: 'gorev',
+      sonra: slaytBaslat,
       html:
         '<section class="defter"><div class="kap"><div class="defter-ic">' +
-        '<p class="ust-etiket">' + esc(S.okul) + '</p>' +
+        '<div class="defter-sol">' +
+        '<p class="ust-etiket"><span class="canli-nokta"></span>' + esc(S.okul) + '</p>' +
         '<h1>Bugün ne hazırlıyorsun?</h1>' +
         '<p class="giris">Yapacağın işi seç. Hangi yapay zekâyı açacağını, ne yazacağını ve neyi kontrol edeceğini adım adım gösterelim.</p>' +
         '<form class="ara-form" data-ara role="search"><input type="search" name="q" aria-label="Araç ara" placeholder="Araç ya da iş ara: sınav, şarkı, Gemini…"><button class="dugme" type="submit">Ara</button></form>' +
-        '<p class="sayilar">' + aktif.length + ' araç · ' + GOREVLER.length + ' hazır görev rehberi · ' + promptSay + ' kopyalanabilir prompt</p>' +
+        '<div class="sayilar-kapsul">' +
+        '<span class="sayi-cip"><b>' + aktif.length + '</b> yapay zekâ aracı</span>' +
+        '<span class="sayi-cip"><b>' + GOREVLER.length + '</b> ana kategori rehberi</span>' +
+        '<span class="sayi-cip"><b>' + promptSay + '</b> hazır prompt</span>' +
+        '</div></div>' +
+        '<div class="defter-sag">' + vitrinSlayt() + '</div>' +
         '</div></div></section>' +
 
         yeniSerit() +
@@ -498,6 +603,16 @@
       filtreYaz();
       return;
     }
+    var sg = e.target.closest('[data-slayt-git]');
+    if (sg) {
+      slaytGuncelle(Number(sg.getAttribute('data-slayt-git')));
+      return;
+    }
+    var sy = e.target.closest('[data-slayt-yon]');
+    if (sy) {
+      slaytGuncelle(slaytIndeks + Number(sy.getAttribute('data-slayt-yon')));
+      return;
+    }
     var m = e.target.closest('.menu-dugme');
     if (m) {
       var acik = document.getElementById('ana-menu').classList.toggle('acik');
@@ -531,6 +646,262 @@
     l.src = S.logo;
     l.hidden = false;
   }
+  /* ---------- Yapay Zekâ Veri Çipleri ve İnce Veri Çizgileri Arka Planı ---------- */
+  function baslatAiArkaplan() {
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    var c = document.createElement('canvas');
+    c.className = 'ai-evren';
+    c.setAttribute('aria-hidden', 'true');
+    document.body.insertBefore(c, document.body.firstChild);
+    var ctx = c.getContext('2d');
+    if (!ctx) return;
+
+    var w = 0, h = 0, dpr = 1;
+    var cipler = [], hatlar = [], paketler = [];
+    var ETIKETLER = ['AI·01', 'LLM', 'NPU', 'SYN', 'VEC', 'GEN', 'CTX', 'TOK'];
+
+    function renkOku() {
+      var st = getComputedStyle(document.documentElement);
+      var koyuMu = st.colorScheme === 'dark';
+      return {
+        koyu: koyuMu,
+        vurgu: (st.getPropertyValue('--altin') || '#0f8a7a').trim(),
+        mavi: (st.getPropertyValue('--k-metin') || '#1f5fa8').trim(),
+        mor: (st.getPropertyValue('--k-video') || '#76398a').trim()
+      };
+    }
+    var palet = renkOku();
+
+    function boyutla() {
+      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      w = window.innerWidth;
+      h = window.innerHeight;
+      c.width = w * dpr;
+      c.height = h * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      olustur();
+    }
+
+    function olustur() {
+      palet = renkOku();
+      var adet = Math.max(14, Math.min(28, Math.floor((w * h) / 52000)));
+      cipler = [];
+      for (var i = 0; i < adet; i++) {
+        var tip = i % 3; // 0: kare mikroçip, 1: veri kapsülü, 2: elmas düğüm
+        cipler.push({
+          x: Math.random() * w,
+          y: Math.random() * h,
+          vx: (Math.random() - 0.5) * 0.28,
+          vy: (Math.random() - 0.5) * 0.24 - 0.06,
+          tip: tip,
+          etiket: ETIKETLER[i % ETIKETLER.length],
+          faz: Math.random() * Math.PI * 2,
+          boy: tip === 1 ? 38 : (tip === 0 ? 22 : 14),
+          renkTip: i % 2 === 0 ? 'vurgu' : 'mavi'
+        });
+      }
+
+      /* Arka planda sabit devre veri hatları (ince 90° ve 45° kırılımlı çizgiler) */
+      hatlar = [];
+      var hatSay = Math.max(5, Math.min(10, Math.floor(w / 180)));
+      for (var j = 0; j < hatSay; j++) {
+        var x1 = ((j + 0.5) / hatSay) * w + (Math.random() - 0.5) * 80;
+        var y1 = Math.random() * h * 0.3;
+        var kırX = x1 + (j % 2 === 0 ? 55 : -55);
+        var kırY = y1 + 90 + Math.random() * 120;
+        var y2 = Math.min(h - 30, kırY + 140 + Math.random() * 220);
+        hatlar.push({
+          pts: [
+            { x: x1, y: y1 },
+            { x: x1, y: kırY - 35 },
+            { x: kırX, y: kırY },
+            { x: kırX, y: y2 }
+          ],
+          ilerleme: Math.random(),
+          hiz: 0.0014 + Math.random() * 0.0016,
+          renkTip: j % 2 === 0 ? 'vurgu' : 'mavi'
+        });
+      }
+      paketler = [];
+    }
+
+    function cipCiz(p, t) {
+      var nabiz = 0.5 + 0.5 * Math.sin(t * 0.002 + p.faz);
+      var anaRenk = palet[p.renkTip];
+      ctx.save();
+      ctx.translate(p.x, p.y);
+
+      if (p.tip === 0) {
+        /* Kare AI Mikroçip + Kenar Pinleri */
+        var s = p.boy;
+        var yari = s / 2;
+        ctx.globalAlpha = (palet.koyu ? 0.14 : 0.09) + nabiz * 0.04;
+        ctx.strokeStyle = anaRenk;
+        ctx.fillStyle = anaRenk;
+        ctx.lineWidth = 1;
+
+        // Çip gövdesi
+        ctx.beginPath();
+        ctx.roundRect(-yari, -yari, s, s, 4);
+        ctx.stroke();
+
+        // İç çekirdek
+        ctx.globalAlpha = (palet.koyu ? 0.08 : 0.045) + nabiz * 0.03;
+        ctx.fillRect(-yari + 5, -yari + 5, s - 10, s - 10);
+
+        // Pin bacakları (üst, alt, sol, sağ)
+        ctx.globalAlpha = (palet.koyu ? 0.15 : 0.10);
+        for (var k = -1; k <= 1; k++) {
+          var ofset = k * 5;
+          ctx.beginPath();
+          ctx.moveTo(ofset, -yari); ctx.lineTo(ofset, -yari - 3.5);
+          ctx.moveTo(ofset, yari); ctx.lineTo(ofset, yari + 3.5);
+          ctx.moveTo(-yari, ofset); ctx.lineTo(-yari - 3.5, ofset);
+          ctx.moveTo(yari, ofset); ctx.lineTo(yari + 3.5, ofset);
+          ctx.stroke();
+        }
+      } else if (p.tip === 1) {
+        /* Şeffaf Veri Çipi Kapsülü (AI·01 / LLM / NPU) */
+        var gw = 42, gh = 17;
+        ctx.globalAlpha = (palet.koyu ? 0.13 : 0.085) + nabiz * 0.035;
+        ctx.strokeStyle = anaRenk;
+        ctx.lineWidth = 0.9;
+        ctx.beginPath();
+        ctx.roundRect(-gw / 2, -gh / 2, gw, gh, 5);
+        ctx.stroke();
+
+        ctx.globalAlpha = (palet.koyu ? 0.05 : 0.025);
+        ctx.fillStyle = anaRenk;
+        ctx.fill();
+
+        // Küçük durum noktası + veri etiketi
+        ctx.globalAlpha = (palet.koyu ? 0.22 : 0.15);
+        ctx.beginPath();
+        ctx.arc(-gw / 2 + 6, 0, 1.8, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.font = '600 7.5px ui-monospace, SFMono-Regular, Consolas, monospace';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(p.etiket, -gw / 2 + 11, 0.5);
+      } else {
+        /* Elmas Sinir Ağı Düğümü */
+        var r = 5.5;
+        ctx.globalAlpha = (palet.koyu ? 0.14 : 0.09) + nabiz * 0.04;
+        ctx.strokeStyle = anaRenk;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(0, -r); ctx.lineTo(r, 0); ctx.lineTo(0, r); ctx.lineTo(-r, 0);
+        ctx.closePath();
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.arc(0, 0, 1.6, 0, Math.PI * 2);
+        ctx.fillStyle = anaRenk;
+        ctx.fill();
+      }
+
+      ctx.restore();
+    }
+
+    function hatCiz(hObj) {
+      var pts = hObj.pts;
+      var renk = palet[hObj.renkTip];
+      ctx.save();
+      ctx.strokeStyle = renk;
+      ctx.lineWidth = 0.85;
+      ctx.globalAlpha = palet.koyu ? 0.07 : 0.045;
+      ctx.beginPath();
+      ctx.moveTo(pts[0].x, pts[0].y);
+      for (var i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y);
+      ctx.stroke();
+
+      // Uç düğüm noktaları
+      ctx.fillStyle = renk;
+      ctx.globalAlpha = palet.koyu ? 0.13 : 0.08;
+      ctx.beginPath();
+      ctx.arc(pts[0].x, pts[0].y, 2, 0, Math.PI * 2);
+      ctx.arc(pts[pts.length - 1].x, pts[pts.length - 1].y, 2, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Hat üzerinde akan veri ışığı (pulse)
+      hObj.ilerleme = (hObj.ilerleme + hObj.hiz) % 1;
+      var segSay = pts.length - 1;
+      var tam = hObj.ilerleme * segSay;
+      var seg = Math.min(segSay - 1, Math.floor(tam));
+      var lokal = tam - seg;
+      var px = pts[seg].x + (pts[seg + 1].x - pts[seg].x) * lokal;
+      var py = pts[seg].y + (pts[seg + 1].y - pts[seg].y) * lokal;
+
+      ctx.globalAlpha = palet.koyu ? 0.32 : 0.22;
+      ctx.beginPath();
+      ctx.arc(px, py, 2.2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function kare(t) {
+      if (!document.hidden) {
+        ctx.clearRect(0, 0, w, h);
+
+        // 1. Sabit ince devre veri hatları
+        for (var j = 0; j < hatlar.length; j++) hatCiz(hatlar[j]);
+
+        // 2. Çiplerin hareketi ve birbirine yaklaşan çipler arasındaki ince veri bağları
+        var maxMesafe = 195;
+        for (var i = 0; i < cipler.length; i++) {
+          var a = cipler[i];
+          a.x += a.vx;
+          a.y += a.vy;
+          if (a.x < -40) a.x = w + 40;
+          else if (a.x > w + 40) a.x = -40;
+          if (a.y < -40) a.y = h + 40;
+          else if (a.y > h + 40) a.y = -40;
+
+          for (var k = i + 1; k < cipler.length; k++) {
+            var b = cipler[k];
+            var dx = b.x - a.x, dy = b.y - a.y;
+            var mes = Math.sqrt(dx * dx + dy * dy);
+            if (mes < maxMesafe) {
+              var oran = 1 - mes / maxMesafe;
+              ctx.save();
+              ctx.strokeStyle = palet[a.renkTip];
+              ctx.lineWidth = 0.75;
+              ctx.globalAlpha = oran * (palet.koyu ? 0.11 : 0.065);
+              ctx.beginPath();
+              // İnce veri çizgisi
+              ctx.moveTo(a.x, a.y);
+              ctx.lineTo(b.x, b.y);
+              ctx.stroke();
+
+              // Çizgi üzerinde kayan küçük veri sinyali
+              if ((i + k) % 4 === 0) {
+                var akis = ((t * 0.00035 + i * 0.17) % 1);
+                var sx = a.x + dx * akis;
+                var sy = a.y + dy * akis;
+                ctx.fillStyle = palet[a.renkTip];
+                ctx.globalAlpha = oran * (palet.koyu ? 0.28 : 0.18);
+                ctx.beginPath();
+                ctx.arc(sx, sy, 1.6, 0, Math.PI * 2);
+                ctx.fill();
+              }
+              ctx.restore();
+            }
+          }
+        }
+
+        // 3. Veri çiplerini çiz
+        for (var m = 0; m < cipler.length; m++) cipCiz(cipler[m], t);
+      }
+      requestAnimationFrame(kare);
+    }
+
+    boyutla();
+    window.addEventListener('resize', boyutla);
+    requestAnimationFrame(kare);
+  }
+
   window.addEventListener('hashchange', yonlendir);
   yonlendir();
+  baslatAiArkaplan();
 })();
