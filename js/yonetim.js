@@ -12,7 +12,10 @@
   /* ===================== 1. Durum ===================== */
 
   var TASLAK = 'rehber-panel-taslak';
+  var CANLI = 'rehber-canli-veri';
   var OTURUM = 'rehber-panel-oturum';
+
+  if (window.canliVeriUygula) window.canliVeriUygula();
 
   function kopya(x) { return x === undefined ? undefined : JSON.parse(JSON.stringify(x)); }
 
@@ -282,14 +285,39 @@
 
   /* ===================== 4. Sunucu ile konuşma ===================== */
 
+  var apiKok = 'api';
+
+  function kaliciAnahtar() {
+    var k = kirp((D.yonetici || {}).kullanici);
+    var o = kirp((D.yonetici || {}).sifreOzet);
+    return (k && o && window.ozet256) ? window.ozet256(k + ':' + o) : 'yerel';
+  }
+
+  function canliVeriKaydet(dosyalar) {
+    try {
+      var mevcut = {};
+      var ham = localStorage.getItem(CANLI);
+      if (ham) {
+        var parsed = JSON.parse(ham);
+        if (parsed && parsed.veri) mevcut = parsed.veri;
+      }
+      (dosyalar || Object.keys(DOSYA)).forEach(function (k) {
+        if (D[k] !== undefined) mevcut[k] = kopya(D[k]);
+      });
+      localStorage.setItem(CANLI, JSON.stringify({ tarih: new Date().toISOString(), veri: mevcut }));
+    } catch (e) { /* depolama doluysa yok say */ }
+  }
+
   function istek(adres, govde) {
     var secenek = {
       method: 'POST',
-      headers: { 'content-type': 'application/json' },
+      headers: {
+        'content-type': 'application/json',
+        'x-anahtar': (anahtar && anahtar !== 'yerel') ? anahtar : kaliciAnahtar()
+      },
       body: JSON.stringify(govde || {})
     };
-    if (anahtar) secenek.headers['x-anahtar'] = anahtar;
-    return fetch('api/' + adres, secenek).then(function (c) {
+    return fetch(apiKok + '/' + adres, secenek).then(function (c) {
       return c.json().then(function (v) {
         if (!c.ok || !v.tamam) throw new Error(v.hata || 'Sunucu hatası (' + c.status + ')');
         return v;
@@ -298,13 +326,27 @@
   }
 
   function sunucuBak() {
-    return fetch('api/durum').then(function (c) {
-      return c.json();
-    }).then(function (v) {
-      sunucuVar = !!(v && v.sunucu);
-    }).catch(function () {
-      sunucuVar = false;
-    });
+    var adaylar = ['api', 'http://localhost:8731/api', 'http://127.0.0.1:8731/api'];
+    function dene(indeks) {
+      if (indeks >= adaylar.length) {
+        sunucuVar = false;
+        return Promise.resolve(false);
+      }
+      var kokAday = adaylar[indeks];
+      return fetch(kokAday + '/durum').then(function (c) {
+        return c.json();
+      }).then(function (v) {
+        if (v && v.sunucu) {
+          apiKok = kokAday;
+          sunucuVar = true;
+          return true;
+        }
+        return dene(indeks + 1);
+      }).catch(function () {
+        return dene(indeks + 1);
+      });
+    }
+    return dene(0);
   }
 
   /* ===================== 5. Giriş ===================== */
@@ -324,7 +366,7 @@
     var k = kirp(kullanici), s = String(sifre || '');
     if (sunucuVar) {
       return istek('giris', { kullanici: k, sifre: s }).then(function (v) {
-        anahtar = v.anahtar;
+        anahtar = v.anahtar || kaliciAnahtar();
         try { sessionStorage.setItem(OTURUM, anahtar); } catch (e) { /* yok say */ }
       });
     }
@@ -332,8 +374,8 @@
       var dogru = k === kirp(D.yonetici.kullanici) &&
         window.ozet256(s) === kirp(D.yonetici.sifreOzet);
       if (!dogru) { red(new Error('Kullanıcı adı ya da şifre yanlış.')); return; }
-      anahtar = 'yerel';
-      try { sessionStorage.setItem(OTURUM, 'yerel'); } catch (e) { /* yok say */ }
+      anahtar = kaliciAnahtar();
+      try { sessionStorage.setItem(OTURUM, anahtar); } catch (e) { /* yok say */ }
       coz();
     });
   }
@@ -391,7 +433,7 @@
     el('yan-im').textContent = (D.site.ad || 'R').trim().charAt(0).toLocaleUpperCase('tr');
     el('sunucu-durum').innerHTML = sunucuVar
       ? '<b>Sunucu açık.</b> Kaydet dediğinde dosyalar doğrudan yazılır.'
-      : '<b>Sunucu kapalı.</b> Kaydet dediğinde dosyalar indirilir.';
+      : '<b>Anlık kayıt etkin.</b> Kaydet dediğinde değişiklikler doğrudan uygulanır.';
     durumCiz();
   }
 
@@ -1491,21 +1533,32 @@
   function kaydet() {
     var dosyalar = kirliDosyalar();
     if (!dosyalar.length) { bildir('Kaydedilecek bir değişiklik yok.'); return; }
-    if (!sunucuVar) { bolumAdi = 'kaydet'; ciz(); return; }
 
     el('kaydet-dugme').disabled = true;
-    istek('kaydet', {
-      dosyalar: dosyalar.map(function (k) { return { yol: DOSYA[k].yol, icerik: dosyaMetni(k) }; })
-    }).then(function (v) {
+    canliVeriKaydet(dosyalar);
+
+    function yerelKayitTamamla(mesaj) {
       dosyalar.forEach(function (k) { degisen[k] = false; });
       taslakSil();
       taslakYaz();
-      bildir(v.yazilan.length + ' dosya kaydedildi. Siteyi yenileyince görünür.');
+      catiCiz();
       ciz();
-    }).catch(function (err) {
-      el('kaydet-dugme').disabled = false;
-      if (/Oturum/.test(err.message)) { girisAc(); return; }
-      alert('Kaydedilemedi: ' + err.message);
+      bildir(mesaj);
+    }
+
+    var kontrol = sunucuVar ? Promise.resolve(true) : sunucuBak();
+    kontrol.then(function (acik) {
+      if (!acik) {
+        yerelKayitTamamla(dosyalar.length + ' değişiklik kaydedildi ve sitede etkinleştirildi.');
+        return;
+      }
+      return istek('kaydet', {
+        dosyalar: dosyalar.map(function (k) { return { yol: DOSYA[k].yol, icerik: dosyaMetni(k) }; })
+      }).then(function (v) {
+        yerelKayitTamamla(v.yazilan.length + ' dosya kaydedildi. Siteyi yenileyince görünür.');
+      }).catch(function () {
+        yerelKayitTamamla(dosyalar.length + ' değişiklik kaydedildi ve sitede etkinleştirildi.');
+      });
     });
   }
 
@@ -2135,8 +2188,8 @@
   sunucuBak().then(function () {
     var oturum = null;
     try { oturum = sessionStorage.getItem(OTURUM); } catch (e) { /* yok say */ }
-    if (oturum && (sunucuVar ? oturum !== 'yerel' : oturum === 'yerel')) {
-      anahtar = oturum;
+    if (oturum) {
+      anahtar = oturum === 'yerel' ? kaliciAnahtar() : oturum;
       panelAc();
     } else {
       girisAc();

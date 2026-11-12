@@ -2,6 +2,7 @@
 (function () {
   'use strict';
 
+  if (window.canliVeriUygula) window.canliVeriUygula();
   var S = window.SITE || {};
   var G = S.gorunum || {};
   var A = S.anasayfa || {};

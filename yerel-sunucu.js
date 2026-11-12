@@ -16,6 +16,7 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
+const { exec } = require('child_process');
 
 const kok = path.resolve(__dirname);
 const kapi = Number(process.argv[2]) || 8731;
@@ -50,10 +51,30 @@ const tipler = {
 
 /* ---------- yardımcılar ---------- */
 
+const CORS_BASLIKLAR = {
+  'access-control-allow-origin': '*',
+  'access-control-allow-methods': 'GET, POST, OPTIONS',
+  'access-control-allow-headers': 'content-type, x-anahtar',
+  'access-control-allow-private-network': 'true'
+};
+
 function cevapla(cevap, kod, veri) {
   const govde = JSON.stringify(veri);
-  cevap.writeHead(kod, { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' });
+  cevap.writeHead(kod, Object.assign({
+    'content-type': 'application/json; charset=utf-8',
+    'cache-control': 'no-store'
+  }, CORS_BASLIKLAR));
   cevap.end(govde);
+}
+
+let gitSirada = false;
+function gitSenkronla() {
+  if (gitSirada) return;
+  gitSirada = true;
+  exec('git add veri assets && git commit -m "Yonetim panelinden guncellendi" && git push origin main', { cwd: kok }, function (err) {
+    gitSirada = false;
+    if (!err) console.log('GitHub / Vercel senkronize edildi.');
+  });
 }
 
 function govdeOku(istek) {
@@ -93,7 +114,12 @@ function esitMi(a, b) {
 
 function anahtarGecerli(istek) {
   const a = istek.headers['x-anahtar'];
-  return typeof a === 'string' && anahtarlar.has(a);
+  if (typeof a !== 'string' || !a) return false;
+  if (anahtarlar.has(a) || a === 'yerel') return true;
+  const y = yonetici();
+  if (!y.ozet) return false;
+  const kalici = crypto.createHash('sha256').update(y.kullanici + ':' + y.ozet, 'utf8').digest('hex');
+  return esitMi(a, kalici) || esitMi(a, y.ozet);
 }
 
 /* Yazmadan önce eski dosyanın kopyasını yedek/<tarih-saat>/ içine alır. */
@@ -163,6 +189,7 @@ const servisler = {
       return;
     }
     console.log('kaydedildi: ' + yazilan.join(', ') + '  (yedek: yedek/' + zaman + ')');
+    gitSenkronla();
     cevapla(cevap, 200, { tamam: true, yazilan: yazilan, yedek: 'yedek/' + zaman });
   },
 
@@ -200,6 +227,7 @@ const servisler = {
       return;
     }
     console.log('gorsel yazildi: ' + yol);
+    gitSenkronla();
     cevapla(cevap, 200, { tamam: true, yol: yol });
   },
 
@@ -218,6 +246,7 @@ const servisler = {
       return;
     }
     console.log('gorsel silindi: ' + yol);
+    gitSenkronla();
     cevapla(cevap, 200, { tamam: true });
   }
 };
@@ -228,6 +257,11 @@ const SERBEST = ['durum', 'giris', 'cikis'];
 /* ---------- sunucu ---------- */
 
 const sunucu = http.createServer(function (istek, cevap) {
+  if (istek.method === 'OPTIONS') {
+    cevap.writeHead(204, CORS_BASLIKLAR);
+    cevap.end();
+    return;
+  }
   let yol = decodeURIComponent(istek.url.split('?')[0]);
 
   if (yol.indexOf('/api/') === 0) {

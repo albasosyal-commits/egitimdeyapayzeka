@@ -58,6 +58,30 @@
     }).join('\n');
   };
 
+  window.canliVeriUygula = function () {
+    try {
+      var ham = localStorage.getItem('rehber-canli-veri');
+      if (!ham) return;
+      var paket = JSON.parse(ham);
+      if (!paket || !paket.veri) return;
+      var ESLE = {
+        site: 'SITE',
+        araclar: 'ARACLAR',
+        gorseller: 'GORSELLER',
+        gorevler: 'GOREVLER',
+        rehber: 'REHBER',
+        tema: 'TEMA',
+        yonetici: 'YONETICI'
+      };
+      Object.keys(paket.veri).forEach(function (k) {
+        if (ESLE[k] && paket.veri[k] !== undefined) {
+          window[ESLE[k]] = paket.veri[k];
+        }
+      });
+    } catch (e) { /* yok say */ }
+  };
+
+  window.canliVeriUygula();
   window.temaUygula(window.TEMA);
   if (window.SITE) window.kategoriRenkleri(window.SITE.kategoriler);
 })();
