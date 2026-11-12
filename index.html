@@ -5,6 +5,34 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Öğretmenin Yapay Zekâ Rehberi</title>
   <meta name="description" content="Öğretmenler için göreve göre yapay zekâ rehberi: doğru aracı seçin, hazır promptları kullanın, güvenli çalışın.">
+  <meta name="theme-color" content="#0f8a7a">
+
+  <!-- Sekme İkonları (Favicon, Yeni Sekme Paneli, Mobil Ana Ekran) -->
+  <link rel="icon" type="image/svg+xml" href="assets/ikon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="assets/favicon-192.png">
+  <link rel="shortcut icon" href="favicon.ico">
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
+  <link rel="manifest" href="site.webmanifest">
+
+  <!-- WhatsApp, Telegram, Facebook, LinkedIn ve X (Twitter) Bağlantı Önizleme Banner'ı (1200x630) -->
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="tr_TR">
+  <meta property="og:site_name" content="Özel Ege Atabey Okulları Dijital">
+  <meta property="og:title" content="Öğretmenin Yapay Zekâ Rehberi">
+  <meta property="og:description" content="Yapacağın işi seç; hangi yapay zekâyı açacağını, ne yazacağını ve hazır promptları adım adım gör.">
+  <meta property="og:url" content="https://egitimdeyapayzeka-jet.vercel.app/">
+  <meta property="og:image" content="https://egitimdeyapayzeka-jet.vercel.app/assets/og-banner.png">
+  <meta property="og:image:secure_url" content="https://egitimdeyapayzeka-jet.vercel.app/assets/og-banner.png">
+  <meta property="og:image:type" content="image/png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Öğretmenin Yapay Zekâ Rehberi · Özel Ege Atabey Okulları Dijital">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Öğretmenin Yapay Zekâ Rehberi">
+  <meta name="twitter:description" content="Yapacağın işi seç; hangi yapay zekâyı açacağını, ne yazacağını ve hazır promptları adım adım gör.">
+  <meta name="twitter:image" content="https://egitimdeyapayzeka-jet.vercel.app/assets/og-banner.png">
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,500;9..144,650&display=swap" rel="stylesheet">
@@ -21,7 +49,7 @@
   <header class="ust">
     <div class="kap ust-ic">
       <a class="marka" href="#/" data-duzen="ust-marka" data-duzen-ad="Logo ve Kurum / Site Adı">
-        <img id="marka-logo" class="marka-logo" alt="" hidden>
+        <img id="marka-logo" class="marka-logo" src="assets/ikon.svg" alt="">
         <span class="marka-yazi">
           <strong id="marka-ad"></strong>
           <small id="marka-okul"></small>
@@ -43,7 +71,10 @@
   <footer class="alt" data-duzen="alt-bilgi" data-duzen-ad="Alt Bilgi (Footer)">
     <div class="kap alt-ic">
       <div>
-        <strong id="alt-okul"></strong>
+        <div class="alt-baslik-satir">
+          <img id="alt-logo" class="alt-logo" src="assets/ikon.svg" alt="">
+          <strong id="alt-okul"></strong>
+        </div>
         <p id="alt-not"></p>
       </div>
       <a class="alt-ekle" href="yonetim.html">Yönetim paneli</a>

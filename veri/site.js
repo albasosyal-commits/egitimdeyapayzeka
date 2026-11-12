@@ -3,7 +3,8 @@
 window.SITE = {
   "ad": "Öğretmenin Yapay Zekâ Rehberi",
   "okul": "Özel Ege Atabey Okulları Dijital",
-  "logo": "",
+  "logo": "assets/ikon.svg",
+  "paylasimGorsel": "assets/og-banner.png",
   "siniflar": [
     "1.",
     "2.",

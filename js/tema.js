@@ -78,6 +78,10 @@
           window[ESLE[k]] = paket.veri[k];
         }
       });
+      if (window.SITE) {
+        if (!window.SITE.logo) window.SITE.logo = 'assets/ikon.svg';
+        if (!window.SITE.paylasimGorsel) window.SITE.paylasimGorsel = 'assets/og-banner.png';
+      }
     } catch (e) { /* yok say */ }
   };
 

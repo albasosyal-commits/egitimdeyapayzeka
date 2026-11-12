@@ -31,7 +31,7 @@ const YAZILABILIR = [
   'veri/tema.js',
   'veri/yonetici.js'
 ];
-const GORSEL_KLASOR = { logo: 'assets/logo', gorsel: 'assets/gorsel', site: 'assets' };
+const GORSEL_KLASOR = { logo: 'assets/logo', gorsel: 'assets/gorsel', site: 'assets', banner: 'assets' };
 const GORSEL_UZANTI = ['png', 'jpg', 'jpeg', 'webp', 'gif', 'svg'];
 const EN_BUYUK_GOVDE = 12 * 1024 * 1024;   // 12 MB
 const EN_BUYUK_GORSEL = 5 * 1024 * 1024;   // 5 MB
@@ -46,6 +46,7 @@ const tipler = {
   '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg',
   '.webp': 'image/webp', '.gif': 'image/gif', '.svg': 'image/svg+xml',
   '.ico': 'image/x-icon', '.json': 'application/json; charset=utf-8',
+  '.webmanifest': 'application/manifest+json; charset=utf-8',
   '.woff2': 'font/woff2', '.txt': 'text/plain; charset=utf-8'
 };
 

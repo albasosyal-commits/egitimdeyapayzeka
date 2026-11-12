@@ -98,7 +98,9 @@ li::marker { color: var(--soluk); }
 }
 .ust-ic { display: flex; align-items: center; gap: 24px; min-height: 66px; flex-wrap: wrap; }
 .marka { display: flex; align-items: center; gap: 10px; text-decoration: none; color: inherit; margin-right: auto; padding: 8px 0; }
-.marka-logo { width: 40px; height: 40px; object-fit: contain; }
+.marka-logo { width: 40px; height: 40px; object-fit: contain; border-radius: 9px; flex-shrink: 0; }
+.alt-baslik-satir { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
+.alt-logo { width: 28px; height: 28px; object-fit: contain; border-radius: 7px; flex-shrink: 0; }
 .marka-yazi { display: flex; flex-direction: column; line-height: 1.2; }
 .marka-yazi strong { font-family: var(--serif); font-size: 1.12rem; font-weight: 650; }
 .marka-yazi small { font-size: .74rem; color: var(--soluk); letter-spacing: .02em; }

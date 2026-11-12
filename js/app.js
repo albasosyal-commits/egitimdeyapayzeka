@@ -728,12 +728,22 @@
     var varsayilanAltNot = 'Ücretler ve koşullar sık değişir; araç bilgileri ' + (enYeni ? tarih(enYeni) + ' itibarıyla kontrol edildi' : 'düzenli olarak kontrol edilir') + '. Kullanmadan önce aracın kendi sayfasına bakın. Logolar ve tanıtım görselleri araçların kendi sitelerinden alınmıştır; markalar sahiplerine aittir.';
     document.getElementById('alt-not').textContent = (G.altNot && G.altNot.trim()) ? G.altNot : varsayilanAltNot;
     var l = document.getElementById('marka-logo');
+    var logoYol = S.logo === 'yok' ? '' : (S.logo || 'assets/ikon.svg');
     if (l) {
-      if (S.logo) {
-        l.src = S.logo;
+      if (logoYol) {
+        l.src = logoYol;
         l.hidden = false;
       } else {
         l.hidden = true;
+      }
+    }
+    var altLogo = document.getElementById('alt-logo');
+    if (altLogo) {
+      if (logoYol) {
+        altLogo.src = logoYol;
+        altLogo.hidden = false;
+      } else {
+        altLogo.hidden = true;
       }
     }
     var evren = document.querySelector('canvas.ai-evren');

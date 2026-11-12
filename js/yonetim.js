@@ -57,6 +57,8 @@
 
   function siteVarsayilanlariTamamla(s) {
     if (!s) return;
+    if (!s.logo) s.logo = 'assets/ikon.svg';
+    if (!s.paylasimGorsel) s.paylasimGorsel = 'assets/og-banner.png';
     if (!Array.isArray(s.menu) || !s.menu.length) {
       s.menu = [
         { id: 'gorev', ad: 'Görevler', adres: '#/', durum: 'acik' },
@@ -430,7 +432,7 @@
         (b.say ? '<span class="say">' + b.say() + '</span>' : '') + '</button>';
     }).join('');
     el('yan-ad').textContent = D.site.ad || 'Rehber';
-    el('yan-im').textContent = (D.site.ad || 'R').trim().charAt(0).toLocaleUpperCase('tr');
+    el('yan-im').innerHTML = '<img src="' + esc(D.site.logo || 'assets/ikon.svg') + '" alt="" style="width:100%;height:100%;object-fit:contain">';
     el('sunucu-durum').innerHTML = sunucuVar
       ? '<b>Sunucu açık.</b> Kaydet dediğinde dosyalar doğrudan yazılır.'
       : '<b>Anlık kayıt etkin.</b> Kaydet dediğinde değişiklikler doğrudan uygulanır.';
@@ -1322,22 +1324,33 @@
         '</div>';
     }
 
-    /* 3. Üst Marka (Logo, Site Adı, Kurum Adı) */
+    /* 3. Üst Marka (Logo, Site Adı, Kurum Adı ve WhatsApp Paylaşım Banner'ı) */
     if (odak === 'ust-marka') {
+      var bYol = D.site.paylasimGorsel || 'assets/og-banner.png';
       return '<div class="gd-grup">' +
-        '<h3>Site Kimliği ve Logo</h3>' +
-        '<div class="yuva"><span>Site logosu</span><div class="yuva-ic">' +
+        '<h3>Site Kimliği, İkon ve Logo</h3>' +
+        '<div class="yuva"><span>Site logosu ve sekme ikonu</span><div class="yuva-ic">' +
         '<span class="onizleme-kare' + (D.site.logo ? '' : ' yok') + '">' +
         (D.site.logo ? '<img src="' + esc(D.site.logo) + (gorselSurum['site-logo'] ? '?v=' + gorselSurum['site-logo'] : '') + '" alt="">' : 'yok') +
         '</span><span><span class="yuva-dugmeler">' +
         '<span class="mini dosya-sec">' + (D.site.logo ? 'Değiştir' : 'Logo yükle') +
         '<input type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" data-yukle="site" data-id="site-logo"></span>' +
-        (D.site.logo ? '<button class="mini sil" type="button" data-eylem="site-logo-sil">Kaldır</button>' : '') +
-        '</span><small style="display:block;color:var(--soluk);font-size:.76rem;margin-top:5px">Kare görsel önerilir.</small></span></div></div>' +
+        (D.site.logo && D.site.logo !== 'assets/ikon.svg' ? '<button class="mini sil" type="button" data-eylem="site-logo-sil">Varsayılana dön</button>' : '') +
+        '</span><small style="display:block;color:var(--soluk);font-size:.76rem;margin-top:5px">' + esc(D.site.logo || 'assets/ikon.svg') + '</small></span></div></div>' +
         alan('Site adı', 'site.ad') +
         alan('Okul / kurum adı', 'site.okul') +
         secim('Üst menü çubuğu görünürlüğü', 'site.gorunum.ustMenu', acKapa) +
-        '</div>';
+        '</div>' +
+        '<div class="gd-grup">' +
+        '<h3>WhatsApp / Sosyal Medya Paylaşım Banner\'ı (1200×630)</h3>' +
+        '<div class="yuva"><span>Paylaşım Önizleme Kartı</span>' +
+        '<div style="margin-bottom:8px;border-radius:8px;overflow:hidden;border:1px solid var(--cizgi)">' +
+        '<img src="' + esc(bYol) + (gorselSurum['og-banner'] ? '?v=' + gorselSurum['og-banner'] : '') + '" alt="WhatsApp paylaşım bannerı" style="width:100%;height:auto;display:block">' +
+        '</div>' +
+        '<span class="yuva-dugmeler">' +
+        '<span class="mini dosya-sec">Banner değiştir (1200×630 PNG)<input type="file" accept="image/png,image/jpeg,image/webp" data-yukle="banner" data-id="og-banner"></span>' +
+        '</span><small style="display:block;color:var(--soluk);font-size:.75rem;margin-top:5px">WhatsApp link önizlemesi için ideal ölçü: 1200×630 piksel (<code>' + esc(bYol) + '</code>).</small>' +
+        '</div></div>';
     }
 
     /* 4. Üst Menü Bağlantıları */
@@ -1770,20 +1783,30 @@
   /* ===================== 14. Bölüm: Site ayarları ===================== */
 
   CIZERLER.ayarlar = function () {
-    return '<div class="p-kart"><h2>Site kimliği</h2>' +
+    var bYol = D.site.paylasimGorsel || 'assets/og-banner.png';
+    return '<div class="p-kart"><h2>Site kimliği, sekme ikonu ve WhatsApp paylaşım banner\'ı</h2>' +
       '<div class="alan-cift">' +
       alan('Site adı', 'site.ad') +
       alan('Okul / kurum adı', 'site.okul', { ipucu: 'Üst menüde ve alt bilgide görünür.' }) +
       '</div>' +
-      '<div class="yuva"><span>Site logosu</span><div class="yuva-ic">' +
+      '<div class="alan-cift">' +
+      '<div class="yuva"><span>Site logosu ve yeni sekme ikonu</span><div class="yuva-ic">' +
       '<span class="onizleme-kare' + (D.site.logo ? '' : ' yok') + '">' +
       (D.site.logo ? '<img src="' + esc(D.site.logo) + (gorselSurum['site-logo'] ? '?v=' + gorselSurum['site-logo'] : '') + '" alt="">' : 'yok') +
       '</span><span><span class="yuva-dugmeler">' +
       '<span class="mini dosya-sec">' + (D.site.logo ? 'Değiştir' : 'Dosya seç') +
       '<input type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" data-yukle="site" data-id="site-logo"></span>' +
-      (D.site.logo ? '<button class="mini sil" type="button" data-eylem="site-logo-sil">Kaldır</button>' : '') +
+      (D.site.logo && D.site.logo !== 'assets/ikon.svg' ? '<button class="mini sil" type="button" data-eylem="site-logo-sil">Varsayılan ikona dön</button>' : '') +
       '</span><small style="display:block;color:var(--soluk);font-size:.76rem;margin-top:5px">' +
-      (D.site.logo ? esc(D.site.logo) : 'Kare bir görsel en iyi durur (en az 80×80).') + '</small></span></div></div>' +
+      esc(D.site.logo || 'assets/ikon.svg') + ' — Üst menüde, alt bilgide ve sekme ikonunda görünür.</small></span></div></div>' +
+
+      '<div class="yuva"><span>WhatsApp / Sosyal Medya Bağlantı Banner\'ı (1200×630)</span><div class="yuva-ic">' +
+      '<span class="onizleme-kare genis"><img src="' + esc(bYol) + (gorselSurum['og-banner'] ? '?v=' + gorselSurum['og-banner'] : '') + '" alt=""></span>' +
+      '<span><span class="yuva-dugmeler">' +
+      '<span class="mini dosya-sec">Banner değiştir<input type="file" accept="image/png,image/jpeg,image/webp" data-yukle="banner" data-id="og-banner"></span>' +
+      '</span><small style="display:block;color:var(--soluk);font-size:.76rem;margin-top:5px">' +
+      esc(bYol) + ' — WhatsApp, Telegram ve sosyal medyada link paylaşıldığında çıkan 1200×630 önizleme kartı.</small></span></div></div>' +
+      '</div>' +
       alan('Sınıf düzeyleri', 'site.siniflar', { tip: 'virgul', ipucu: 'Virgülle ayır. Prompt Atölyesi listelerinde kullanılır.' }) +
       '</div>' +
 
@@ -2093,6 +2116,9 @@
     if (tur === 'site') {
       D.site.logo = yol;
       kirlet('site');
+    } else if (tur === 'banner') {
+      D.site.paylasimGorsel = yol;
+      kirlet('site');
     } else {
       if (!D.gorseller[id]) D.gorseller[id] = {};
       D.gorseller[id][tur] = yol;
@@ -2304,10 +2330,8 @@
     if (eylem === 'gorsel-sil') { gorselKaldir(d.getAttribute('data-tur'), id); return; }
     if (eylem === 'gorsel-logosuz') { gorselFiltre = 'logosuz'; git('gorseller'); return; }
     if (eylem === 'site-logo-sil') {
-      var eskiLogo = D.site.logo;
-      D.site.logo = '';
+      D.site.logo = 'assets/ikon.svg';
       kirlet('site');
-      if (sunucuVar && eskiLogo && !/^data:/.test(eskiLogo)) istek('gorsel-sil', { yol: eskiLogo }).catch(function () { });
       ciz();
       return;
     }
