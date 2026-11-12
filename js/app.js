@@ -54,24 +54,25 @@
   function logoKutu(a, sinif) {
     var g = GORSELLER[a.id] || {};
     var ek = sinif ? ' ' + sinif : '';
+    var duzenOzellik = ' data-duzen="arac-gorsel" data-duzen-id="' + esc(a.id) + '" data-duzen-ad="Logo ve Görsel: ' + esc(a.ad) + '"';
     if (g.logo) {
-      return '<span class="logo' + ek + '"><img src="' + esc(g.logo) + '" alt="" loading="lazy"></span>';
+      return '<span class="logo' + ek + '"' + duzenOzellik + '><img src="' + esc(g.logo) + '" alt="" loading="lazy"></span>';
     }
-    return '<span class="logo' + ek + ' logo-harf r-' + esc(a.kategori[0]) + '">' +
-      esc(a.ad.trim().charAt(0).toLocaleUpperCase('tr')) + '</span>';
+    return '<span class="logo' + ek + ' logo-harf r-' + esc((a.kategori || [])[0] || 'metin') + '"' + duzenOzellik + '>' +
+      esc((a.ad || '?').trim().charAt(0).toLocaleUpperCase('tr')) + '</span>';
   }
 
   // Araç sayfasının başındaki tanıtım görseli (aracın kendi sitesinden indirilmiştir).
   function onizleme(a) {
     var g = GORSELLER[a.id] || {};
     if (!g.gorsel || a.durum === 'kapandi') return '';
-    return '<figure class="onizleme"><img src="' + esc(g.gorsel) + '" alt="' + esc(a.ad) + ' arayüzünden bir görüntü" loading="lazy">' +
+    return '<figure class="onizleme" data-duzen="arac-gorsel" data-duzen-id="' + esc(a.id) + '" data-duzen-ad="Tanıtım Görseli: ' + esc(a.ad) + '"><img src="' + esc(g.gorsel) + '" alt="' + esc(a.ad) + ' arayüzünden bir görüntü" loading="lazy">' +
       '<figcaption>Tanıtım görseli · Kaynak: ' + esc(a.ad) + '</figcaption></figure>';
   }
 
   function aracKart(a) {
     var k = a.kategori[0];
-    return '<a class="sekmeli" href="#/arac/' + esc(a.id) + '">' +
+    return '<a class="sekmeli" href="#/arac/' + esc(a.id) + '" data-duzen="arac-kart" data-duzen-id="' + esc(a.id) + '" data-duzen-ad="Araç: ' + esc(a.ad) + '">' +
       '<span class="sekme r-' + esc(k) + '">' + esc(a.alt || katAd(k)) + '</span>' +
       '<div class="sekmeli-ic"><div class="kart-bas">' + logoKutu(a) + '<h3>' + esc(a.ad) + '</h3></div>' +
       '<p>' + esc(a.ozet) + '</p>' +
@@ -83,7 +84,7 @@
   /* Ana sayfadaki iş kutucuğu: zengin ikon grafiği, altında başlık ve kısa açıklama. */
   function isKutucuk(g) {
     var alt = g.kisa || g.sure || '';
-    return '<a class="is-kart m-' + esc(g.id) + '" href="#/gorev/' + esc(g.id) + '" title="' + esc(g.ozet) + '">' +
+    return '<a class="is-kart m-' + esc(g.id) + '" href="#/gorev/' + esc(g.id) + '" title="' + esc(g.ozet) + '" data-duzen="gorev-kart" data-duzen-id="' + esc(g.id) + '" data-duzen-ad="Görev Kartı: ' + esc(g.baslik) + '">' +
       '<span class="is-madalyon y-' + esc(g.kategori) + ' m-' + esc(g.id) + '">' + window.ikonCiz(g.ikon) + '</span>' +
       '<span class="is-yazi"><b>' + esc(g.baslik) + '</b>' + (alt ? '<small>' + esc(alt) + '</small>' : '') + '</span></a>';
   }
@@ -103,12 +104,12 @@
     if (!liste.length) return '';
     var ikili = liste.concat(liste);
     var etiketYazi = A.seritEtiket || 'Vitrin & Yeni Araçlar';
-    return '<section class="yeni-serit" aria-label="Öne çıkan araçlar şeridi"><div class="kap"><div class="yeni-ic">' +
+    return '<section class="yeni-serit" aria-label="Öne çıkan araçlar şeridi" data-duzen="serit" data-duzen-ad="Kayan Vitrin & Yeni Araçlar Şeridi"><div class="kap"><div class="yeni-ic">' +
       '<span class="yeni-etiket"><i></i>' + esc(etiketYazi) + '</span>' +
       '<div class="yeni-pencere"><ul class="yeni-liste">' + ikili.map(function (a, i) {
         var k = a.kategori[0];
         return '<li style="--s:' + (i % liste.length) + '" aria-hidden="' + (i >= liste.length) + '">' +
-          '<a class="yeni-rozet" href="#/arac/' + esc(a.id) + '" tabindex="' + (i >= liste.length ? '-1' : '0') + '">' +
+          '<a class="yeni-rozet" href="#/arac/' + esc(a.id) + '" tabindex="' + (i >= liste.length ? '-1' : '0') + '" data-duzen="arac-kart" data-duzen-id="' + esc(a.id) + '" data-duzen-ad="Araç: ' + esc(a.ad) + '">' +
           logoKutu(a, 'mini') +
           '<span class="yeni-rozet-ad">' + esc(a.ad) + '</span>' +
           '<span class="yeni-rozet-kat y-' + esc(k) + '">' + esc(a.alt || katAd(k)) + '</span>' +
@@ -230,7 +231,7 @@
       defter: function () {
         if (!acikMi(A.defterAcik)) return '';
         return '<section class="defter"><div class="kap"><div class="defter-ic' + (slaytHtml ? '' : ' tek-sutun') + '">' +
-          '<div class="defter-sol">' +
+          '<div class="defter-sol" data-duzen="defter-sol" data-duzen-ad="Kahraman Sol Sütun (Başlık, Arama ve İstatistikler)">' +
           (acikMi(A.ustEtiketAcik) && ustEtiketMetin ? '<p class="ust-etiket"><span class="canli-nokta"></span>' + esc(ustEtiketMetin) + '</p>' : '') +
           '<h1>' + esc(A.baslik || 'Bugün ne hazırlıyorsun?') + '</h1>' +
           (A.giris !== '' ? '<p class="giris">' + esc(A.giris || 'Yapacağın işi seç. Hangi yapay zekâyı açacağını, ne yazacağını ve neyi kontrol edeceğini adım adım gösterelim.') + '</p>' : '') +
@@ -241,7 +242,7 @@
             '<span class="sayi-cip"><b>' + promptSay + '</b> hazır prompt</span>' +
             '</div>' : '') +
           '</div>' +
-          (slaytHtml ? '<div class="defter-sag">' + slaytHtml + '</div>' : '') +
+          (slaytHtml ? '<div class="defter-sag" data-duzen="defter-sag" data-duzen-ad="Sağ Sütun: 3B Vitrin Slaytı">' + slaytHtml + '</div>' : '') +
           '</div></div></section>';
       },
       serit: function () {
@@ -249,7 +250,7 @@
       },
       gorevler: function () {
         if (!acikMi(A.gorevlerAcik)) return '';
-        return '<section class="bolum"><div class="kap">' +
+        return '<section class="bolum" data-duzen="gorevler-bolum" data-duzen-ad="Yapacağın İşi Seç Bölümü"><div class="kap">' +
           '<div class="bolum-bas"><h2>' + esc(A.gorevlerBaslik || 'Yapacağın işi seç') + '</h2>' +
           (acikMi(A.gorevlerBaglantiAcik) ? '<a href="#/araclar">' + esc(A.gorevlerBaglantiYazi || 'Tüm araçları gör') + '</a>' : '') +
           '</div>' +
@@ -257,11 +258,11 @@
       },
       aliskanliklar: function () {
         if (!acikMi(A.aliskanliklarAcik) || !aliskanlikListesi.length) return '';
-        return '<section class="bolum"><div class="kap">' +
+        return '<section class="bolum" data-duzen="aliskanliklar" data-duzen-ad="Üç Alışkanlık Bölümü ve Kartları"><div class="kap">' +
           '<div class="bolum-bas"><h2>' + esc(A.aliskanliklarBaslik || 'Araçtan önce üç alışkanlık') + '</h2></div>' +
           '<div class="uc-adim">' +
           aliskanlikListesi.map(function (adim, i) {
-            return '<a href="' + esc(adim.adres || '#/') + '"><span class="no">' + esc(adim.no || (i + 1)) + '</span><h3>' + esc(adim.baslik || '') + '</h3><p>' + esc(adim.metin || '') + '</p></a>';
+            return '<a href="' + esc(adim.adres || '#/') + '" data-duzen="aliskanliklar" data-duzen-id="' + i + '" data-duzen-ad="Alışkanlık Kartı ' + esc(adim.no || (i + 1)) + '"><span class="no">' + esc(adim.no || (i + 1)) + '</span><h3>' + esc(adim.baslik || '') + '</h3><p>' + esc(adim.metin || '') + '</p></a>';
           }).join('') +
           '</div></div></section>';
       }
@@ -300,7 +301,7 @@
     return cikti + Object.keys(S.kategoriler).map(function (k) {
       var ic = bulunan.filter(function (a) { return a.kategori[0] === k; });
       if (!ic.length) return '';
-      return '<section class="grup"><div class="grup-bas"><h2>' + esc(S.kategoriler[k].baslik) + '</h2><span>' + esc(S.kategoriler[k].aciklama) + '</span></div>' +
+      return '<section class="grup"><div class="grup-bas" data-duzen="kategori-grup" data-duzen-id="' + esc(k) + '" data-duzen-ad="Kategori: ' + esc(S.kategoriler[k].baslik) + '"><h2>' + esc(S.kategoriler[k].baslik) + '</h2><span>' + esc(S.kategoriler[k].aciklama) + '</span></div>' +
         '<div class="arac-izgara">' + ic.map(aracKart).join('') + '</div></section>';
     }).join('');
   }
@@ -317,7 +318,7 @@
     filtre.kat = sorgu.get('kat') || 'hepsi';
     filtre.ucret = sorgu.get('ucret') || 'hepsi';
     var katlar = [['hepsi', 'Hepsi']].concat(Object.keys(S.kategoriler).map(function (k) { return [k, S.kategoriler[k].ad]; }));
-    var kapananHtml = (acikMi(sa.kapananAcik) && kapanan.length) ? '<details class="kapanan"><summary>Artık kullanılamayan araçlar (' + kapanan.length + ')</summary>' +
+    var kapananHtml = (acikMi(sa.kapananAcik) && kapanan.length) ? '<details class="kapanan" data-duzen="araclar-ust" data-duzen-ad="Kapanan Araçlar Kutusu"><summary>Artık kullanılamayan araçlar (' + kapanan.length + ')</summary>' +
       '<ul>' + kapanan.map(function (a) {
         var yer = aracBul(a.yerine);
         return '<li><strong>' + esc(a.ad) + '</strong>: ' + esc(a.ozet) + (yer ? ' <a href="#/arac/' + esc(yer.id) + '">Yerine ' + esc(yer.ad) + ' kullanılabilir.</a>' : '') + '</li>';
@@ -329,7 +330,7 @@
     return {
       baslik: sa.baslik || 'Araçlar',
       nav: 'araclar',
-      html: '<div class="kap"><div class="sayfa-bas"><h1>' + esc(sa.baslik || 'Araç rehberi') + '</h1>' +
+      html: '<div class="kap"><div class="sayfa-bas" data-duzen="araclar-ust" data-duzen-ad="Araçlar Sayfası Başlık ve Filtre Ayarları"><h1>' + esc(sa.baslik || 'Araç rehberi') + '</h1>' +
         '<p class="giris">' + esc(sa.giris || 'Ücreti, yaş sınırı ve öğretmene faydası bir bakışta. Bir araca tıklayınca hazır prompt ve dikkat edilecekleri görürsün.') + '</p>' +
         (filtreParcalar ? '<div class="filtre">' + filtreParcalar + '</div>' : '') +
         '</div><div id="arac-sonuc" aria-live="polite">' + aracSonuc() + '</div>' + kapananHtml + '</div>'
@@ -368,7 +369,7 @@
     return {
       baslik: a.ad,
       nav: 'araclar',
-      html: '<div class="kap"><div class="sayfa-bas"><p class="kirinti"><a href="#/araclar">Araçlar</a> / ' + esc(a.alt || katAd(a.kategori[0])) + '</p>' +
+      html: '<div class="kap" data-duzen="arac-kart" data-duzen-id="' + esc(a.id) + '" data-duzen-ad="Araç Ayarları ve Görselleri: ' + esc(a.ad) + '"><div class="sayfa-bas"><p class="kirinti"><a href="#/araclar">Araçlar</a> / ' + esc(a.alt || katAd(a.kategori[0])) + '</p>' +
         '<div class="baslik-satir">' + logoKutu(a, 'buyuk') + '<h1>' + esc(a.ad) + '</h1></div>' +
         '<p class="giris">' + esc(a.ozet) + '</p></div>' +
         '<div class="iki-sutun"><div class="icerik">' + onizleme(a) + (icerik || '<p>Bu araç için henüz ayrıntı eklenmedi.</p>') + '</div>' +
@@ -402,7 +403,7 @@
     return {
       baslik: g.baslik,
       nav: 'gorev',
-      html: '<div class="kap"><div class="sayfa-bas"><p class="kirinti"><a href="#/">Görevler</a> / ' + esc(katAd(g.kategori)) + '</p>' +
+      html: '<div class="kap" data-duzen="gorev-kart" data-duzen-id="' + esc(g.id) + '" data-duzen-ad="Görev Rehberi: ' + esc(g.baslik) + '"><div class="sayfa-bas"><p class="kirinti"><a href="#/">Görevler</a> / ' + esc(katAd(g.kategori)) + '</p>' +
         '<div class="baslik-satir"><span class="is-madalyon kucuk-madalyon y-' + esc(g.kategori) + ' m-' + esc(g.id) + '">' + window.ikonCiz(g.ikon) + '</span><h1>' + esc(g.baslik) + '</h1></div>' +
         '<p class="giris">' + esc(g.ozet) + (g.sure ? ' Tahminî süre: ' + esc(g.sure) + '.' : '') + '</p></div>' +
         '<div class="icerik dar" style="padding:26px 0 40px">' +
@@ -469,19 +470,19 @@
       baslik: sp.baslik || 'Prompt Atölyesi',
       nav: 'prompt',
       sonra: atolyeCiz,
-      html: '<div class="kap"><div class="sayfa-bas"><h1>' + esc(sp.baslik || 'Prompt Atölyesi') + '</h1>' +
+      html: '<div class="kap"><div class="sayfa-bas" data-duzen="prompt-ust" data-duzen-ad="Prompt Atölyesi Başlık ve Giriş"><h1>' + esc(sp.baslik || 'Prompt Atölyesi') + '</h1>' +
         '<p class="giris">' + esc(sp.giris || 'Prompt, yapay zekâya ne istediğini anlatan yönergedir. Ne kadar açık yazarsan sonuç o kadar işine yarar: iyi bir prompt, yeni bir öğretmen stajyere verilen iyi bir talimat gibidir.') + '</p></div>' +
 
-        (acikMi(sp.kiyasAcik) ? '<section class="bolum" style="padding-top:26px"><h2 style="margin-bottom:16px">' + esc(sp.kiyasBaslik || 'Aynı istek, iki farklı sonuç') + '</h2>' +
+        (acikMi(sp.kiyasAcik) ? '<section class="bolum" style="padding-top:26px" data-duzen="prompt-kiyas" data-duzen-ad="Zayıf ve Güçlü Prompt Karşılaştırması"><h2 style="margin-bottom:16px">' + esc(sp.kiyasBaslik || 'Aynı istek, iki farklı sonuç') + '</h2>' +
           '<div class="kiyas"><div class="zayif"><h3>Zayıf prompt</h3><p>' + esc(o.zayif) + '</p><p class="acik">' + esc(o.zayifNeden) + '</p></div>' +
           '<div class="guclu"><h3>Güçlü prompt</h3><p>' + o.guclu.map(function (p) { return '<span class="parca p-' + p[0] + '">' + esc(p[1]) + '</span>'; }).join(' ') + '</p>' +
           '<ul class="gosterge">' + R.promptFormul.filter(function (f) { return o.guclu.some(function (p) { return p[0] === f.id; }); }).map(function (f) { return '<li><span class="parca p-' + f.id + '">' + esc(f.ad) + '</span></li>'; }).join('') + '</ul></div></div></section>' : '') +
 
-        (acikMi(sp.formulAcik) ? '<section class="bolum"><h2 style="margin-bottom:16px">' + esc(sp.formulBaslik || 'Güçlü promptun beş parçası') + '</h2><div class="formul">' +
+        (acikMi(sp.formulAcik) ? '<section class="bolum" data-duzen="prompt-formul" data-duzen-ad="Güçlü Promptun Beş Parçası"><h2 style="margin-bottom:16px">' + esc(sp.formulBaslik || 'Güçlü promptun beş parçası') + '</h2><div class="formul">' +
           R.promptFormul.map(function (f) { return '<div class="p-' + f.id + '"><strong>' + esc(f.ad) + '</strong><span>' + esc(f.aciklama) + '</span></div>'; }).join('') +
           '</div></section>' : '') +
 
-        (acikMi(sp.atolyeAcik) ? '<section class="bolum"><h2>' + esc(sp.atolyeBaslik || 'Kendi promptunu oluştur') + '</h2><p style="color:var(--soluk);margin:6px 0 18px">' + esc(sp.atolyeAlt || 'Formu doldur, prompt yanda yazılsın. Kopyala ve istediğin yapay zekâya yapıştır.') + '</p>' +
+        (acikMi(sp.atolyeAcik) ? '<section class="bolum" data-duzen="prompt-atolye" data-duzen-ad="İnteraktif Prompt Oluşturucu"><h2 style="margin-bottom:0">' + esc(sp.atolyeBaslik || 'Kendi promptunu oluştur') + '</h2><p style="color:var(--soluk);margin:6px 0 18px">' + esc(sp.atolyeAlt || 'Formu doldur, prompt yanda yazılsın. Kopyala ve istediğin yapay zekâya yapıştır.') + '</p>' +
           '<div class="atolye"><form id="atolye-form" autocomplete="off">' +
           '<div class="alan-cift"><label class="alan"><span>Branşın</span><input class="girdi" name="brans" placeholder="Sosyal Bilgiler"></label>' +
           '<label class="alan"><span>Sınıf</span><select class="girdi" name="sinif">' + sinifSec + '</select></label></div>' +
@@ -491,10 +492,10 @@
           '<label class="alan"><span>Ek isteğin (isteğe bağlı)</span><input class="girdi" name="ek" placeholder="Görsel okuryazarlık içeren örnekler kullan"></label>' +
           '</form><div class="atolye-sonuc" id="atolye-cikti"></div></div></section>' : '') +
 
-        (acikMi(sp.hazirAcik) ? '<section class="bolum"><div class="bolum-bas"><h2>' + esc(sp.hazirBaslik || 'Hazır promptlar') + '</h2><p>' + esc(sp.hazirAlt || 'İşe göre seçip kopyala.') + '</p></div><div class="kutuphane dar">' +
+        (acikMi(sp.hazirAcik) ? '<section class="bolum" data-duzen="prompt-hazir" data-duzen-ad="Hazır Promptlar Kütüphanesi"><div class="bolum-bas"><h2>' + esc(sp.hazirBaslik || 'Hazır promptlar') + '</h2><p>' + esc(sp.hazirAlt || 'İşe göre seçip kopyala.') + '</p></div><div class="kutuphane dar">' +
           GOREVLER.map(function (g) {
             var liste = (g.promptlar && g.promptlar.length) ? g.promptlar : [{ baslik: katAd(g.kategori), prompt: g.prompt }];
-            return '<div class="kutuphane-oge"><h3><a href="#/gorev/' + esc(g.id) + '">' + esc(g.baslik) + '</a></h3>' +
+            return '<div class="kutuphane-oge" data-duzen="gorev-kart" data-duzen-id="' + esc(g.id) + '" data-duzen-ad="Görev Promptları: ' + esc(g.baslik) + '"><h3><a href="#/gorev/' + esc(g.id) + '">' + esc(g.baslik) + '</a></h3>' +
               '<div class="prompt-yigin">' + liste.map(function (p) { return tahta(p.prompt, p.baslik || katAd(g.kategori)); }).join('') + '</div></div>';
           }).join('') + '</div></section>' : '') +
         '</div>'
@@ -508,19 +509,19 @@
     return {
       baslik: sg.baslik || 'Güvenli Kullanım',
       nav: 'guvenli',
-      html: '<div class="kap"><div class="sayfa-bas"><h1>' + esc(sg.baslik || 'Güvenli kullanım') + '</h1><p class="giris">' + esc(g.giris) + '</p></div>' +
-        (acikMi(sg.yapYapmaAcik) ? '<section class="bolum" style="padding-top:26px"><div class="yap-yapma">' +
+      html: '<div class="kap"><div class="sayfa-bas" data-duzen="guvenli-ust" data-duzen-ad="Güvenli Kullanım Başlık ve Giriş"><h1>' + esc(sg.baslik || 'Güvenli kullanım') + '</h1><p class="giris">' + esc(g.giris) + '</p></div>' +
+        (acikMi(sg.yapYapmaAcik) ? '<section class="bolum" style="padding-top:26px" data-duzen="guvenli-yapyapma" data-duzen-ad="Yap / Yapma Sütunları"><div class="yap-yapma">' +
           '<div class="yapma"><h3>' + esc(sg.yapmaBaslik || 'Yapay zekâya girme') + '</h3>' + liste(g.yapma) + '</div>' +
           '<div class="yap"><h3>' + esc(sg.yapBaslik || 'Bunun yerine') + '</h3>' + liste(g.yap) + '</div></div></section>' : '') +
-        (acikMi(sg.ilkelerAcik) ? '<section class="bolum"><h2 style="margin-bottom:14px">' + esc(sg.ilkelerBaslik || 'Beş temel ilke') + '</h2><div class="ilkeler">' +
+        (acikMi(sg.ilkelerAcik) ? '<section class="bolum" data-duzen="guvenli-ilkeler" data-duzen-ad="Beş Temel İlke Bölümü"><h2 style="margin-bottom:14px">' + esc(sg.ilkelerBaslik || 'Beş temel ilke') + '</h2><div class="ilkeler">' +
           g.ilkeler.map(function (i) { return '<div><h3>' + esc(i.baslik) + '</h3><p>' + esc(i.metin) + '</p></div>'; }).join('') + '</div></section>' : '') +
-        (acikMi(sg.kontrolAcik) ? '<section class="bolum"><h2 style="margin-bottom:14px">' + esc(sg.kontrolBaslik || 'Sınıfa götürmeden önce') + '</h2><div class="dar"><ul class="kontrol">' +
+        (acikMi(sg.kontrolAcik) ? '<section class="bolum" data-duzen="guvenli-kontrol" data-duzen-ad="Sınıfa Götürmeden Önce Kontrol Listesi"><h2 style="margin-bottom:14px">' + esc(sg.kontrolBaslik || 'Sınıfa götürmeden önce') + '</h2><div class="dar"><ul class="kontrol">' +
           g.kontrol.map(function (x) { return '<li><label><input type="checkbox"><span>' + esc(x) + '</span></label></li>'; }).join('') + '</ul></div></section>' : '') +
-        (acikMi(sg.yasAcik) ? '<section class="bolum"><h2>' + esc(sg.yasBaslik || 'Araçların yaş sınırları') + '</h2><p style="color:var(--soluk);margin:6px 0 14px">' + esc(g.yasNot) + '</p>' +
+        (acikMi(sg.yasAcik) ? '<section class="bolum" data-duzen="guvenli-yas" data-duzen-ad="Araçların Yaş Sınırları Tablosu"><h2>' + esc(sg.yasBaslik || 'Araçların yaş sınırları') + '</h2><p style="color:var(--soluk);margin:6px 0 14px">' + esc(g.yasNot) + '</p>' +
           '<div class="tablo-sar"><table><thead><tr><th>Araç</th><th>Yaş sınırı</th><th>Ücret</th></tr></thead><tbody>' +
           yaslar.map(function (a) { return '<tr><td><a href="#/arac/' + esc(a.id) + '">' + esc(a.ad) + '</a></td><td>' + esc(a.yas) + '</td><td>' + esc(S.ucretler[a.ucret] || a.ucret) + '</td></tr>'; }).join('') +
           '</tbody></table></div></section>' : '') +
-        (acikMi(sg.kaynaklarAcik) ? '<section class="bolum"><h2 style="margin-bottom:10px">' + esc(sg.kaynaklarBaslik || 'Resmî kaynaklar') + '</h2><ul class="kaynak dar">' +
+        (acikMi(sg.kaynaklarAcik) ? '<section class="bolum" data-duzen="guvenli-kaynaklar" data-duzen-ad="Resmî Kaynaklar Bölümü"><h2 style="margin-bottom:10px">' + esc(sg.kaynaklarBaslik || 'Resmî kaynaklar') + '</h2><ul class="kaynak dar">' +
           g.kaynaklar.map(function (k) { return '<li><a href="' + esc(guvenliUrl(k.url)) + '" target="_blank" rel="noopener">' + esc(k.ad) + ' ↗</a><small>' + esc(k.not) + '</small></li>'; }).join('') +
           '</ul></section>' : '') +
         '</div>'
@@ -533,16 +534,16 @@
     return {
       baslik: sb.baslik || 'Yeni Başlayanlar',
       nav: 'baslangic',
-      html: '<div class="kap"><div class="sayfa-bas"><h1>' + esc(sb.baslik || 'Yapay zekâya yeni mi başlıyorsun?') + '</h1><p class="giris">' + esc(b.giris) + '</p></div>' +
-        (acikMi(sb.adimlarAcik) ? '<section class="bolum" style="padding-top:26px"><div class="dar"><h2 style="margin-bottom:16px">' + esc(sb.adimlarBaslik || 'İlk 30 dakikan') + '</h2><ol class="adimlar">' +
+      html: '<div class="kap"><div class="sayfa-bas" data-duzen="baslangic-ust" data-duzen-ad="Yeni Başlayanlar Başlık ve Giriş"><h1>' + esc(sb.baslik || 'Yapay zekâya yeni mi başlıyorsun?') + '</h1><p class="giris">' + esc(b.giris) + '</p></div>' +
+        (acikMi(sb.adimlarAcik) ? '<section class="bolum" style="padding-top:26px" data-duzen="baslangic-adimlar" data-duzen-ad="İlk 30 Dakikan ve İlk Prompt"><div class="dar"><h2 style="margin-bottom:16px">' + esc(sb.adimlarBaslik || 'İlk 30 dakikan') + '</h2><ol class="adimlar">' +
           b.adimlar.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ol>' +
           tahta(b.ilkPrompt, 'İlk promptun') + '</div></section>' : '') +
-        (acikMi(sb.turlerAcik) ? '<section class="bolum"><h2>' + esc(sb.turlerBaslik || 'Yapay zekâ türleri') + '</h2><p style="color:var(--soluk);margin:6px 0 16px">' + esc(sb.turlerAlt || 'Tür, verdiğin şey ile aldığın şeye göre adlandırılır.') + '</p><div class="turler">' +
+        (acikMi(sb.turlerAcik) ? '<section class="bolum" data-duzen="baslangic-turler" data-duzen-ad="Yapay Zekâ Türleri Kartları"><h2>' + esc(sb.turlerBaslik || 'Yapay zekâ türleri') + '</h2><p style="color:var(--soluk);margin:6px 0 16px">' + esc(sb.turlerAlt || 'Tür, verdiğin şey ile aldığın şeye göre adlandırılır.') + '</p><div class="turler">' +
           b.turler.map(function (t) {
             var arac = t.araclar.map(function (id) { var a = aracBul(id); return a ? '<a href="#/arac/' + esc(a.id) + '">' + esc(a.ad) + '</a>' : ''; }).filter(Boolean).join(', ');
             return '<div class="tur"><h3>' + esc(t.ad) + '</h3><p class="en">' + esc(t.en) + '</p><p>' + esc(t.aciklama) + '</p><p class="araclar-kisa">' + arac + '</p></div>';
           }).join('') + '</div></section>' : '') +
-        (acikMi(sb.terimlerAcik) ? '<section class="bolum"><h2 style="margin-bottom:12px">' + esc(sb.terimlerBaslik || 'Sık duyacağın kelimeler') + '</h2><dl class="terimler dar">' +
+        (acikMi(sb.terimlerAcik) ? '<section class="bolum" data-duzen="baslangic-terimler" data-duzen-ad="Sık Duyacağın Kelimeler (Sözlük)"><h2 style="margin-bottom:12px">' + esc(sb.terimlerBaslik || 'Sık duyacağın kelimeler') + '</h2><dl class="terimler dar">' +
           b.terimler.map(function (t) { return '<dt>' + esc(t[0]) + '</dt><dd>' + esc(t[1]) + '</dd>'; }).join('') + '</dl></section>' : '') +
         '</div>'
     };
@@ -560,7 +561,20 @@
 
   /* ---------- Yönlendirme ---------- */
 
-  function yonlendir() {
+  var onizlemeModu = /[?&]onizleme=1/.test(location.search);
+  var seciliDuzenAnahtar = { odak: '', id: '' };
+
+  function seciliVurgula() {
+    if (!onizlemeModu) return;
+    document.querySelectorAll('.duzen-secili').forEach(function (el) { el.classList.remove('duzen-secili'); });
+    if (!seciliDuzenAnahtar.odak) return;
+    var secici = '[data-duzen="' + seciliDuzenAnahtar.odak + '"]' +
+      (seciliDuzenAnahtar.id ? '[data-duzen-id="' + seciliDuzenAnahtar.id + '"]' : '');
+    var bulunan = document.querySelector(secici);
+    if (bulunan) bulunan.classList.add('duzen-secili');
+  }
+
+  function yonlendir(koruKaydirma) {
     var ham = location.hash.replace(/^#\/?/, '');
     if (ham === 'ana') return;
     var bol = ham.split('?');
@@ -584,9 +598,15 @@
       else a.removeAttribute('aria-current');
     });
     menuKapat();
-    window.scrollTo(0, 0);
-    if (yonlendirildi) ana.focus({ preventScroll: true });
+    if (koruKaydirma !== true) {
+      window.scrollTo(0, 0);
+      if (yonlendirildi) ana.focus({ preventScroll: true });
+    }
     yonlendirildi = true;
+    seciliVurgula();
+    if (onizlemeModu && window.parent && window.parent !== window) {
+      window.parent.postMessage({ tip: 'onizleme-sayfa', hash: location.hash || '#/' }, '*');
+    }
   }
   var yonlendirildi = false;
 
@@ -683,34 +703,43 @@
 
   /* ---------- Başlangıç ---------- */
 
-  document.body.classList.toggle('cam-kapali', !acikMi(G.camEfekt));
-  var ustEl = document.querySelector('.ust');
-  if (ustEl) ustEl.hidden = !acikMi(G.ustMenu);
-  var menuEl = document.getElementById('ana-menu');
-  if (menuEl && Array.isArray(S.menu) && S.menu.length) {
-    menuEl.innerHTML = S.menu.filter(function (m) { return acikMi(m.durum); }).map(function (m) {
-      return '<a href="' + esc(m.adres || '#/') + '" data-nav="' + esc(m.id || '') + '">' + esc(m.ad || '') + '</a>';
-    }).join('');
-  }
-  var altEl = document.querySelector('.alt');
-  if (altEl) altEl.hidden = !acikMi(G.altBilgi);
-  var altEkleEl = document.querySelector('.alt-ekle');
-  if (altEkleEl) {
-    altEkleEl.hidden = !acikMi(G.altPanelBaglanti);
-    if (G.altPanelYazi) altEkleEl.textContent = G.altPanelYazi;
-  }
+  function cerceveUygula() {
+    document.body.classList.toggle('cam-kapali', !acikMi(G.camEfekt));
+    var ustEl = document.querySelector('.ust');
+    if (ustEl) ustEl.hidden = !acikMi(G.ustMenu);
+    var menuEl = document.getElementById('ana-menu');
+    if (menuEl && Array.isArray(S.menu) && S.menu.length) {
+      menuEl.innerHTML = S.menu.filter(function (m) { return acikMi(m.durum); }).map(function (m) {
+        return '<a href="' + esc(m.adres || '#/') + '" data-nav="' + esc(m.id || '') + '">' + esc(m.ad || '') + '</a>';
+      }).join('');
+    }
+    var altEl = document.querySelector('.alt');
+    if (altEl) altEl.hidden = !acikMi(G.altBilgi);
+    var altEkleEl = document.querySelector('.alt-ekle');
+    if (altEkleEl) {
+      altEkleEl.hidden = !acikMi(G.altPanelBaglanti);
+      altEkleEl.textContent = G.altPanelYazi || 'Yönetim paneli';
+    }
 
-  document.getElementById('marka-ad').textContent = S.ad;
-  document.getElementById('marka-okul').textContent = S.okul;
-  document.getElementById('alt-okul').textContent = S.okul;
-  var enYeni = ARACLAR.map(function (a) { return a.kontrol || ''; }).sort().pop();
-  var varsayilanAltNot = 'Ücretler ve koşullar sık değişir; araç bilgileri ' + (enYeni ? tarih(enYeni) + ' itibarıyla kontrol edildi' : 'düzenli olarak kontrol edilir') + '. Kullanmadan önce aracın kendi sayfasına bakın. Logolar ve tanıtım görselleri araçların kendi sitelerinden alınmıştır; markalar sahiplerine aittir.';
-  document.getElementById('alt-not').textContent = (G.altNot && G.altNot.trim()) ? G.altNot : varsayilanAltNot;
-  if (S.logo) {
+    document.getElementById('marka-ad').textContent = S.ad || '';
+    document.getElementById('marka-okul').textContent = S.okul || '';
+    document.getElementById('alt-okul').textContent = S.okul || '';
+    var enYeni = ARACLAR.map(function (a) { return a.kontrol || ''; }).sort().pop();
+    var varsayilanAltNot = 'Ücretler ve koşullar sık değişir; araç bilgileri ' + (enYeni ? tarih(enYeni) + ' itibarıyla kontrol edildi' : 'düzenli olarak kontrol edilir') + '. Kullanmadan önce aracın kendi sayfasına bakın. Logolar ve tanıtım görselleri araçların kendi sitelerinden alınmıştır; markalar sahiplerine aittir.';
+    document.getElementById('alt-not').textContent = (G.altNot && G.altNot.trim()) ? G.altNot : varsayilanAltNot;
     var l = document.getElementById('marka-logo');
-    l.src = S.logo;
-    l.hidden = false;
+    if (l) {
+      if (S.logo) {
+        l.src = S.logo;
+        l.hidden = false;
+      } else {
+        l.hidden = true;
+      }
+    }
+    var evren = document.querySelector('canvas.ai-evren');
+    if (evren) evren.style.display = acikMi(G.aiArkaplan) ? '' : 'none';
   }
+  cerceveUygula();
   /* ---------- Yapay Zekâ Veri Çipleri ve İnce Veri Çizgileri Arka Planı ---------- */
   function baslatAiArkaplan() {
     if (!acikMi(G.aiArkaplan)) return;
@@ -968,7 +997,94 @@
     requestAnimationFrame(kare);
   }
 
-  window.addEventListener('hashchange', yonlendir);
-  yonlendir();
+  /* ---------- Yönetim Paneli Canlı Önizleme ve Tıkla-Düzenle Köprüsü ---------- */
+  if (onizlemeModu) {
+    var st = document.createElement('style');
+    st.textContent =
+      '[data-duzen] { position: relative; transition: outline-color .15s, box-shadow .15s; cursor: pointer !important; }' +
+      '[data-duzen]:hover { outline: 2px dashed var(--altin); outline-offset: 4px; }' +
+      '[data-duzen].duzen-secili { outline: 2.5px solid var(--altin) !important; outline-offset: 4px; box-shadow: 0 0 0 4px color-mix(in srgb, var(--altin) 18%, transparent); }' +
+      '[data-duzen]:hover::after, [data-duzen].duzen-secili::after {' +
+      '  content: "✎ " attr(data-duzen-ad); position: absolute; top: -11px; right: 8px; z-index: 40;' +
+      '  background: var(--altin); color: var(--koyu-yazi); font-family: var(--sans); font-size: 11px; font-weight: 700;' +
+      '  line-height: 1.2; padding: 3px 8px; border-radius: 999px; pointer-events: none; white-space: nowrap;' +
+      '  box-shadow: 0 4px 12px rgba(0,0,0,.18); letter-spacing: .01em;' +
+      '}';
+    document.head.appendChild(st);
+
+    document.addEventListener('click', function (e) {
+      if (e.target.closest('[data-slayt-git], [data-slayt-yon], [data-filtre], [data-kopyala], .menu-dugme')) return;
+      var d = e.target.closest('[data-duzen]');
+      if (!d) return;
+      var odak = d.getAttribute('data-duzen') || '';
+      var id = d.getAttribute('data-duzen-id') || '';
+      var ad = d.getAttribute('data-duzen-ad') || odak;
+      seciliDuzenAnahtar = { odak: odak, id: id };
+      seciliVurgula();
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage({
+          tip: 'onizleme-sec',
+          odak: odak,
+          id: id,
+          ad: ad,
+          hash: location.hash || '#/'
+        }, '*');
+      }
+      var bag = e.target.closest('a');
+      if (bag) {
+        var href = bag.getAttribute('href') || '';
+        // Üst menü bağlantılarına tıklanınca hem o sayfaya geçsin hem üst menü ayarları açılsın
+        if (d.getAttribute('data-duzen') === 'ust-menu' && href.indexOf('#') === 0) return;
+        // Kartlara veya dış bağlantılara tek tıklamada sayfadan ayrılmasın, solda ayarları açılsın (çift tıklamada içine girer)
+        e.preventDefault();
+      }
+    }, true);
+
+    document.addEventListener('dblclick', function (e) {
+      var bag = e.target.closest('a[href^="#/"]');
+      if (bag) {
+        location.hash = bag.getAttribute('href');
+      }
+    });
+
+    window.addEventListener('message', function (e) {
+      var msg = e.data;
+      if (!msg || typeof msg !== 'object') return;
+      if (msg.tip === 'veri-guncelle' && msg.veri) {
+        var v = msg.veri;
+        if (v.site) window.SITE = v.site;
+        if (v.araclar) window.ARACLAR = v.araclar;
+        if (v.gorseller) window.GORSELLER = v.gorseller;
+        if (v.gorevler) window.GOREVLER = v.gorevler;
+        if (v.rehber) window.REHBER = v.rehber;
+        if (v.tema) window.TEMA = v.tema;
+
+        S = window.SITE || {};
+        G = S.gorunum || {};
+        A = S.anasayfa || {};
+        SF = S.sayfalar || {};
+        ARACLAR = (window.ARACLAR || []).filter(function (a) { return !a.gizli; });
+        GOREVLER = (window.GOREVLER || []).filter(function (g) { return !g.gizli; });
+        GORSELLER = window.GORSELLER || {};
+        R = window.REHBER || {};
+        aktif = ARACLAR.filter(function (a) { return a.durum !== 'kapandi'; });
+        kapanan = ARACLAR.filter(function (a) { return a.durum === 'kapandi'; });
+
+        if (window.temaUygula && window.TEMA) window.temaUygula(window.TEMA);
+        if (window.kategoriRenkleri && S.kategoriler) window.kategoriRenkleri(S.kategoriler);
+        cerceveUygula();
+        yonlendir(true);
+      } else if (msg.tip === 'sayfa-git' && msg.hash) {
+        if (location.hash !== msg.hash) location.hash = msg.hash;
+        else yonlendir(true);
+      } else if (msg.tip === 'odak-vurgula') {
+        seciliDuzenAnahtar = { odak: msg.odak || '', id: msg.id || '' };
+        seciliVurgula();
+      }
+    });
+  }
+
+  window.addEventListener('hashchange', function () { yonlendir(false); });
+  yonlendir(false);
   baslatAiArkaplan();
 })();

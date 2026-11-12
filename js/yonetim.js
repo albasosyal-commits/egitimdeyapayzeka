@@ -466,7 +466,23 @@
   function ciz() {
     var b = BOLUMLER.find(function (x) { return x.ad === bolumAdi; });
     el('bolum-baslik').textContent = b ? b.baslik : 'Kaydet';
+    el('bolum').classList.toggle('genis-govde', bolumAdi === 'yerlesim');
+    if (bolumAdi === 'yerlesim' && el('canli-onizleme') && el('gd-sol-panel')) {
+      el('gd-sol-panel').innerHTML = solPanelCiz();
+      yerlesimCubukGuncelle();
+      onizlemeGonder();
+      durumCiz();
+      return;
+    }
     el('bolum').innerHTML = (CIZERLER[bolumAdi] || CIZERLER.panel)();
+    if (bolumAdi === 'yerlesim') {
+      var cerceve = el('canli-onizleme');
+      if (cerceve) {
+        cerceve.addEventListener('load', function () {
+          onizlemeGonder();
+        });
+      }
+    }
     durumCiz();
   }
 
@@ -1123,7 +1139,7 @@
       '<label>' + esc(etiket) + '<small>--' + esc(ad) + '</small></label></div>';
   }
 
-  /* ===================== 13. Bölüm: Sayfalar ve yerleşim ===================== */
+  /* ===================== 13. Bölüm: Sayfalar ve yerleşim (Canlı Önizlemeli Görsel Düzenleyici) ===================== */
 
   var ANASAYFA_BLOK_ADLARI = {
     defter: { ad: 'Kahraman Alanı & 3B Vitrin Slaytı', acikAnahtar: 'defterAcik', aciklama: 'Üst karşılama başlığı, arama kutusu, istatistikler ve sağdaki 3B vitrin slaytı.' },
@@ -1132,205 +1148,623 @@
     aliskanliklar: { ad: 'Araçtan Önce Üç Alışkanlık', acikAnahtar: 'aliskanliklarAcik', aciklama: 'Sayfa altındaki 1-2-3 numaralı rehber kartları.' }
   };
 
-  CIZERLER.yerlesim = function () {
+  var onizlemeSayfa = '#/';
+  var onizlemeCihaz = 'masaustu';
+  var seciliOdak = {
+    odak: 'defter-sol',
+    id: '',
+    ad: 'Kahraman Sol Sütun (Başlık, Arama ve İstatistikler)'
+  };
+
+  var ANA_SAYFALAR = [
+    { hash: '#/', ad: 'Ana Sayfa', odak: 'defter-sol', odakAd: 'Kahraman Sol Sütun (Başlık, Arama ve İstatistikler)' },
+    { hash: '#/araclar', ad: 'Araçlar', odak: 'araclar-ust', odakAd: 'Araçlar Sayfası Başlık ve Filtre Ayarları' },
+    { hash: '#/prompt', ad: 'Prompt Atölyesi', odak: 'prompt-ust', odakAd: 'Prompt Atölyesi Başlık ve Giriş' },
+    { hash: '#/guvenli', ad: 'Güvenli Kullanım', odak: 'guvenli-ust', odakAd: 'Güvenli Kullanım Başlık ve Giriş' },
+    { hash: '#/baslangic', ad: 'Yeni Başlayanlar', odak: 'baslangic-ust', odakAd: 'Yeni Başlayanlar Başlık ve Giriş' }
+  ];
+
+  function onizlemeGonder() {
+    var cerceve = el('canli-onizleme');
+    if (!cerceve || !cerceve.contentWindow) return;
+    try {
+      cerceve.contentWindow.postMessage({
+        tip: 'veri-guncelle',
+        veri: D
+      }, '*');
+      cerceve.contentWindow.postMessage({
+        tip: 'odak-vurgula',
+        odak: seciliOdak.odak,
+        id: seciliOdak.id
+      }, '*');
+    } catch (e) { /* yok say */ }
+  }
+
+  function onizlemeSayfaGit(hash, odakGuncelle) {
+    onizlemeSayfa = hash || '#/';
+    if (odakGuncelle) {
+      var anaSayfa = ANA_SAYFALAR.find(function (s) { return s.hash === onizlemeSayfa; });
+      if (anaSayfa) {
+        seciliOdak = { odak: anaSayfa.odak, id: '', ad: anaSayfa.odakAd };
+      } else if (onizlemeSayfa.indexOf('#/gorev/') === 0) {
+        var gid = decodeURIComponent(onizlemeSayfa.slice('#/gorev/'.length));
+        var gr = D.gorevler.find(function (g) { return g.id === gid; });
+        seciliOdak = { odak: 'gorev-kart', id: gid, ad: 'Görev Rehberi: ' + (gr ? gr.baslik : gid) };
+      } else if (onizlemeSayfa.indexOf('#/arac/') === 0) {
+        var aid = decodeURIComponent(onizlemeSayfa.slice('#/arac/'.length));
+        var ar = aracBul(aid);
+        seciliOdak = { odak: 'arac-kart', id: aid, ad: 'Araç Ayarları ve Görselleri: ' + (ar ? ar.ad : aid) };
+      }
+    }
+    var cerceve = el('canli-onizleme');
+    if (cerceve && cerceve.contentWindow) {
+      try {
+        cerceve.contentWindow.postMessage({ tip: 'sayfa-git', hash: onizlemeSayfa }, '*');
+        cerceve.contentWindow.postMessage({ tip: 'odak-vurgula', odak: seciliOdak.odak, id: seciliOdak.id }, '*');
+      } catch (e) { /* yok say */ }
+    }
+    if (el('gd-sol-panel')) el('gd-sol-panel').innerHTML = solPanelCiz();
+    yerlesimCubukGuncelle();
+  }
+
+  function yerlesimCubukGuncelle() {
+    document.querySelectorAll('[data-onizleme-sayfa]').forEach(function (b) {
+      var h = b.getAttribute('data-onizleme-sayfa');
+      b.setAttribute('aria-pressed', String(h === onizlemeSayfa));
+    });
+    var altSec = el('onizleme-alt-secim');
+    if (altSec) {
+      altSec.value = (onizlemeSayfa.indexOf('#/gorev/') === 0 || onizlemeSayfa.indexOf('#/arac/') === 0) ? onizlemeSayfa : '';
+    }
+    document.querySelectorAll('[data-onizleme-cihaz]').forEach(function (b) {
+      b.setAttribute('aria-pressed', String(b.getAttribute('data-onizleme-cihaz') === onizlemeCihaz));
+    });
+    var sar = el('gd-cerceve-sar');
+    if (sar) sar.className = 'gd-cerceve-sar cihaz-' + onizlemeCihaz;
+  }
+
+  function odakFormuCiz() {
     siteVarsayilanlariTamamla(D.site);
     var acKapa = [['acik', 'Açık (Göster)'], ['kapali', 'Kapalı (Gizle)']];
+    var odak = seciliOdak.odak || 'defter-sol';
+    var id = seciliOdak.id || '';
+
+    /* 1. Araç Kartı, Logo veya Tanıtım Görseli tıklandığında */
+    if (odak === 'arac-kart' || odak === 'arac-gorsel') {
+      var aIndeks = D.araclar.findIndex(function (x) { return x.id === id; });
+      if (aIndeks < 0) aIndeks = 0;
+      var a = D.araclar[aIndeks];
+      if (!a) return '<p class="yardim">Araç bulunamadı.</p>';
+      var ay = 'araclar.' + aIndeks;
+      var gorselKutuHtml =
+        '<div class="gd-grup Vurgulu">' +
+        '<h3>🖼 Logo ve Tanıtım Görseli (' + esc(a.ad) + ')</h3>' +
+        '<p class="yardim">Yeni görsel seçtiğinde sağdaki önizlemede anında güncellenir.</p>' +
+        gorselYuva('logo', a) +
+        gorselYuva('gorsel', a) +
+        '</div>';
+
+      return '<div class="gd-ust-eylem">' +
+        '<button class="dugme kucuk" type="button" data-eylem="onizleme-sayfa" data-hash="#/arac/' + esc(a.id) + '">Bu aracın iç sayfasını önizlemede aç →</button>' +
+        '<button class="mini" type="button" data-eylem="arac-yayin" data-id="' + esc(a.id) + '">' + (a.gizli ? 'Yayına Al' : 'Siteden Gizle') + '</button>' +
+        '</div>' +
+        gorselKutuHtml +
+        '<div class="gd-grup">' +
+        '<h3>Temel Araç Bilgileri</h3>' +
+        alan('Araç adı', ay + '.ad') +
+        alan('Web adresi', ay + '.url', { yerTutucu: 'https://…' }) +
+        '<div class="alan-cift">' +
+        secim('Ücret durumu', ay + '.ucret', ucretSecenekleri()) +
+        alan('Ücret notu', ay + '.ucretNot', { yerTutucu: 'Günlük 5 üretim ücretsiz' }) +
+        '</div>' +
+        alan('Kısa açıklama (kart özeti)', ay + '.ozet', { satir: 2 }) +
+        '<div class="alan-cift">' +
+        alan('Kart üst sekme başlığı', ay + '.alt', { yerTutucu: 'Sunum, Ölçme…' }) +
+        alan('Yaş sınırı', ay + '.yas', { yerTutucu: '13+' }) +
+        '</div>' +
+        alan('Türkçe desteği', ay + '.turkce', { yerTutucu: 'Arayüz ve çıktı Türkçe' }) +
+        '<fieldset><legend>Kategoriler</legend><div class="onay-grup">' +
+        kategoriSecenekleri().map(function (k) {
+          return '<label><input type="checkbox" data-kat="' + esc(k[0]) + '" data-i="' + aIndeks + '"' +
+            ((a.kategori || []).indexOf(k[0]) !== -1 ? ' checked' : '') + '>' + esc(k[1]) + '</label>';
+        }).join('') + '</div></fieldset>' +
+        '</div>' +
+        '<div class="gd-grup">' +
+        '<h3>Rehber İçeriği & Hazır Prompt</h3>' +
+        alan('Öğretmen ne yapabilir? (her satıra bir madde)', ay + '.neIcin', { tip: 'satirlar', satir: 4 }) +
+        alan('Hazır prompt', ay + '.prompt', { satir: 4, ipucu: '[köşeli parantez] içindekiler vurgulu görünür.' }) +
+        alan('Püf noktası', ay + '.ipucu', { satir: 2 }) +
+        alan('Dikkat uyarısı', ay + '.dikkat', { satir: 2 }) +
+        '<div class="alan-cift">' +
+        secim('Vitrin slaytı ve şeridinde göster', ay + '.vitrin', [['', 'Gösterme'], ['1', 'Vitrinde göster']], '', 'evet') +
+        secim('Durum', ay + '.durum', [['', 'Etkin'], ['kapandi', 'Kapandı']]) +
+        '</div></div>';
+    }
+
+    /* 2. Görev Kartı veya Görev Sayfası tıklandığında */
+    if (odak === 'gorev-kart') {
+      var gIndeks = D.gorevler.findIndex(function (x) { return x.id === id; });
+      if (gIndeks < 0) gIndeks = 0;
+      var g = D.gorevler[gIndeks];
+      if (!g) return '<p class="yardim">Görev bulunamadı.</p>';
+      var gy = 'gorevler.' + gIndeks;
+      return '<div class="gd-ust-eylem">' +
+        '<button class="dugme kucuk" type="button" data-eylem="onizleme-sayfa" data-hash="#/gorev/' + esc(g.id) + '">Bu görevin sayfasını önizlemede aç →</button>' +
+        '<button class="mini" type="button" data-eylem="gorev-yayin" data-i="' + gIndeks + '">' + (g.gizli ? 'Yayına Al' : 'Gizle') + '</button>' +
+        '</div>' +
+        '<div class="gd-grup">' +
+        '<h3>Görev Kutucuğu ve Başlık</h3>' +
+        alan('Görev başlığı', gy + '.baslik') +
+        alan('Kart alt başlığı (kısa açıklama)', gy + '.kisa') +
+        '<div class="alan-cift">' +
+        secim('Renk kategorisi', gy + '.kategori', kategoriSecenekleri()) +
+        alan('Tahminî süre', gy + '.sure', { yerTutucu: '10 dk' }) +
+        '</div>' +
+        alan('Görev sayfası giriş özeti', gy + '.ozet', { satir: 2 }) +
+        ikonSecici(gy + '.ikon', g.ikon) +
+        '</div>' +
+        '<div class="gd-grup">' +
+        '<h3>Önerilen Araçlar</h3>' +
+        satirListesi(gy + '.araclar', [
+          { anahtar: 'id', secenekler: aracSecenekleri },
+          { anahtar: 'neden', yerTutucu: 'Neden uygun?' }
+        ], 'Araç ekle') +
+        '</div>' +
+        '<div class="gd-grup">' +
+        '<h3>Adımlar, Promptlar ve Kontrol Listesi</h3>' +
+        alan('Adımlar (her satıra bir adım)', gy + '.adimlar', { tip: 'satirlar', satir: 5 }) +
+        '<fieldset><legend>Hazır prompt şablonları</legend>' +
+        satirListesi(gy + '.promptlar', [
+          { anahtar: 'baslik', yerTutucu: 'Alt iş başlığı' },
+          { anahtar: 'prompt', yerTutucu: 'Prompt metni', satir: 3 }
+        ], 'Prompt şablonu ekle') + '</fieldset>' +
+        alan('Kontrol listesi (her satıra bir madde)', gy + '.kontrol', { tip: 'satirlar', satir: 4 }) +
+        '</div>';
+    }
+
+    /* 3. Üst Marka (Logo, Site Adı, Kurum Adı) */
+    if (odak === 'ust-marka') {
+      return '<div class="gd-grup">' +
+        '<h3>Site Kimliği ve Logo</h3>' +
+        '<div class="yuva"><span>Site logosu</span><div class="yuva-ic">' +
+        '<span class="onizleme-kare' + (D.site.logo ? '' : ' yok') + '">' +
+        (D.site.logo ? '<img src="' + esc(D.site.logo) + (gorselSurum['site-logo'] ? '?v=' + gorselSurum['site-logo'] : '') + '" alt="">' : 'yok') +
+        '</span><span><span class="yuva-dugmeler">' +
+        '<span class="mini dosya-sec">' + (D.site.logo ? 'Değiştir' : 'Logo yükle') +
+        '<input type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" data-yukle="site" data-id="site-logo"></span>' +
+        (D.site.logo ? '<button class="mini sil" type="button" data-eylem="site-logo-sil">Kaldır</button>' : '') +
+        '</span><small style="display:block;color:var(--soluk);font-size:.76rem;margin-top:5px">Kare görsel önerilir.</small></span></div></div>' +
+        alan('Site adı', 'site.ad') +
+        alan('Okul / kurum adı', 'site.okul') +
+        secim('Üst menü çubuğu görünürlüğü', 'site.gorunum.ustMenu', acKapa) +
+        '</div>';
+    }
+
+    /* 4. Üst Menü Bağlantıları */
+    if (odak === 'ust-menu') {
+      var menuListesi = D.site.menu || [];
+      return '<div class="gd-grup">' +
+        '<div class="p-baslik-satir"><h3>Üst Menü Öğeleri</h3>' +
+        '<button class="mini" type="button" data-eylem="menu-ekle">+ Menü ekle</button></div>' +
+        secim('Üst menü şeridi', 'site.gorunum.ustMenu', acKapa) +
+        '<div class="gd-menu-liste">' +
+        menuListesi.map(function (m, i) {
+          var kapaliMi = m.durum === 'kapali';
+          return '<div class="gd-menu-oge' + (kapaliMi ? ' pasif' : '') + '">' +
+            '<div class="alan-cift">' +
+            '<label class="alan"><span>Menü adı</span><input class="girdi" data-yol="site.menu.' + i + '.ad" value="' + esc(m.ad || '') + '"></label>' +
+            '<label class="alan"><span>Adres</span><input class="girdi" data-yol="site.menu.' + i + '.adres" value="' + esc(m.adres || '#/') + '"></label>' +
+            '</div>' +
+            '<div class="gd-menu-alt">' +
+            '<select class="girdi" data-yol="site.menu.' + i + '.durum" style="max-width:150px">' +
+            '<option value="acik"' + (!kapaliMi ? ' selected' : '') + '>Açık (Göster)</option>' +
+            '<option value="kapali"' + (kapaliMi ? ' selected' : '') + '>Kapalı (Gizle)</option>' +
+            '</select>' +
+            '<span class="mini-grup" style="margin-left:auto">' +
+            '<button class="mini" type="button" data-eylem="menu-tasi" data-i="' + i + '" data-yon="-1"' + (i === 0 ? ' disabled' : '') + '>↑</button>' +
+            '<button class="mini" type="button" data-eylem="menu-tasi" data-i="' + i + '" data-yon="1"' + (i === menuListesi.length - 1 ? ' disabled' : '') + '>↓</button>' +
+            '<button class="mini sil" type="button" data-eylem="menu-sil" data-i="' + i + '"' + (menuListesi.length <= 1 ? ' disabled' : '') + '>Sil</button>' +
+            '</span></div></div>';
+        }).join('') +
+        '</div></div>';
+    }
+
+    /* 5. Alt Bilgi (Footer) */
+    if (odak === 'alt-bilgi') {
+      return '<div class="gd-grup">' +
+        '<h3>Alt Bilgi (Footer) Ayarları</h3>' +
+        secim('Alt bilgi alanı görünürlüğü', 'site.gorunum.altBilgi', acKapa) +
+        alan('Kurum adı', 'site.okul') +
+        alan('Alt bilgi açıklama metni', 'site.gorunum.altNot', { satir: 4, ipucu: 'Boş bırakırsan otomatik oluşturulur.' }) +
+        secim('Sağ alt "Yönetim paneli" bağlantısı', 'site.gorunum.altPanelBaglanti', acKapa) +
+        alan('Yönetim paneli bağlantı yazısı', 'site.gorunum.altPanelYazi') +
+        '</div>';
+    }
+
+    /* 6. Ana Sayfa: Kahraman Sol Sütun */
+    if (odak === 'defter-sol') {
+      return '<div class="gd-grup">' +
+        '<h3>Kahraman (Hero) Sol Sütun Ayarları</h3>' +
+        secim('Kahraman bölümü tamamı', 'site.anasayfa.defterAcik', acKapa) +
+        '<div class="alan-cift">' +
+        secim('Üst rozet (okul etiketi)', 'site.anasayfa.ustEtiketAcik', acKapa) +
+        alan('Üst rozet özel metni', 'site.anasayfa.ustEtiket', { yerTutucu: 'Boşsa okul adı yazar' }) +
+        '</div>' +
+        alan('Ana başlık (H1)', 'site.anasayfa.baslik') +
+        alan('Giriş açıklaması', 'site.anasayfa.giris', { satir: 3 }) +
+        '</div>' +
+        '<div class="gd-grup">' +
+        '<h3>Arama Çubuğu ve İstatistikler</h3>' +
+        secim('Arama kutusu', 'site.anasayfa.aramaAcik', acKapa) +
+        alan('Arama kutusu ipucu yazısı', 'site.anasayfa.aramaYerTutucu') +
+        alan('Arama düğmesi yazısı', 'site.anasayfa.aramaDugme') +
+        secim('Alt istatistik kapsülleri', 'site.anasayfa.sayilarAcik', acKapa) +
+        '</div>';
+    }
+
+    /* 7. Ana Sayfa: Sağ Sütun 3B Vitrin Slaytı */
+    if (odak === 'defter-sag') {
+      var vitrinAraclar = D.araclar.filter(function (a) { return !a.gizli && a.durum !== 'kapandi'; });
+      return '<div class="gd-grup">' +
+        '<h3>Sağ Sütun: 3B Vitrin Slaytı</h3>' +
+        secim('3B vitrin slaytı görünürlüğü', 'site.anasayfa.slaytAcik', acKapa, 'Kapatılırsa sol başlık sütunu tam genişlik olur.') +
+        alan('Slayt üst rozet yazısı', 'site.anasayfa.slaytEtiket', { yerTutucu: 'ÖNE ÇIKAN ARAÇ' }) +
+        alan('Slayt ipucu kutusu başlığı', 'site.anasayfa.slaytKutuBaslik', { yerTutucu: '✦ Sınıfta ne işe yarar?' }) +
+        alan('Slayt alt bağlantı yazısı', 'site.anasayfa.slaytBaglantiYazi', { yerTutucu: 'Rehberi ve promptu aç' }) +
+        '</div>' +
+        '<div class="gd-grup">' +
+        '<h3>Slaytta ve Vitrinde Gösterilen Araçlar</h3>' +
+        '<p class="yardim">İşaretlediğin araçlar 3B vitrin slaytında ve kayan şeritte döner. Bir aracın logosunu/yazısını düzenlemek için yanındaki düğmeye bas.</p>' +
+        '<div class="gd-arac-secim">' +
+        vitrinAraclar.map(function (a) {
+          var idx = D.araclar.indexOf(a);
+          return '<div class="gd-arac-satir">' +
+            '<label><input type="checkbox" data-yol="araclar.' + idx + '.vitrin" data-tip="evet-onay"' + (a.vitrin ? ' checked' : '') + '> ' +
+            logoKutu(a, 'mini') + ' <b>' + esc(a.ad) + '</b></label>' +
+            '<button class="mini" type="button" data-eylem="odak-sec" data-odak="arac-gorsel" data-id="' + esc(a.id) + '" data-ad="Araç: ' + esc(a.ad) + '">Görsel / Düzenle</button>' +
+            '</div>';
+        }).join('') +
+        '</div></div>';
+    }
+
+    /* 8. Ana Sayfa: Kayan Vitrin Şeridi */
+    if (odak === 'serit') {
+      var tumAktif = D.araclar.filter(function (a) { return !a.gizli && a.durum !== 'kapandi'; });
+      return '<div class="gd-grup">' +
+        '<h3>Kayan Vitrin & Yeni Araçlar Şeridi</h3>' +
+        secim('Kayan şerit görünürlüğü', 'site.anasayfa.seritAcik', acKapa) +
+        alan('Şerit sol etiket yazısı', 'site.anasayfa.seritEtiket', { yerTutucu: 'Vitrin & Yeni Araçlar' }) +
+        '</div>' +
+        '<div class="gd-grup">' +
+        '<h3>Şeritte Kayan Araçları Seç</h3>' +
+        '<div class="gd-arac-secim">' +
+        tumAktif.map(function (a) {
+          var idx = D.araclar.indexOf(a);
+          return '<div class="gd-arac-satir">' +
+            '<label><input type="checkbox" data-yol="araclar.' + idx + '.vitrin" data-tip="evet-onay"' + (a.vitrin ? ' checked' : '') + '> ' +
+            logoKutu(a, 'mini') + ' <b>' + esc(a.ad) + '</b></label>' +
+            '<button class="mini" type="button" data-eylem="odak-sec" data-odak="arac-gorsel" data-id="' + esc(a.id) + '" data-ad="Araç: ' + esc(a.ad) + '">Düzenle</button>' +
+            '</div>';
+        }).join('') +
+        '</div></div>';
+    }
+
+    /* 9. Ana Sayfa: Görevler Bölümü */
+    if (odak === 'gorevler-bolum') {
+      return '<div class="gd-grup">' +
+        '<h3>"Yapacağın İşi Seç" Bölümü</h3>' +
+        secim('Görevler bölümü görünürlüğü', 'site.anasayfa.gorevlerAcik', acKapa) +
+        alan('Bölüm başlığı', 'site.anasayfa.gorevlerBaslik') +
+        '<div class="alan-cift">' +
+        secim('Sağ bağlantı görünürlüğü', 'site.anasayfa.gorevlerBaglantiAcik', acKapa) +
+        alan('Sağ bağlantı yazısı', 'site.anasayfa.gorevlerBaglantiYazi') +
+        '</div>' +
+        '<fieldset><legend>Kutucuk İkonlarının Biçimi</legend><div class="hazir-izgara">' +
+        [['yuvarlak', 'Yuvarlak'], ['altigen', 'Altıgen'], ['yumusak', 'Yumuşak kare']].map(function (s) {
+          return '<button class="hazir-tema" type="button" data-eylem="tema-sekil" data-id="' + s[0] + '" aria-pressed="' + ((D.tema.sekil || 'yuvarlak') === s[0]) + '"><b>' + s[1] + '</b></button>';
+        }).join('') + '</div></fieldset>' +
+        '</div>' +
+        '<div class="gd-grup">' +
+        '<div class="p-baslik-satir"><h3>Görev Kartları Sıralaması</h3>' +
+        '<button class="mini" type="button" data-eylem="gorev-yeni">+ Yeni görev</button></div>' +
+        '<p class="yardim">Bir görev kartına önizlemede tıklayarak veya buradan "Düzenle" diyerek ayarlarını açabilirsin.</p>' +
+        D.gorevler.map(function (g, i) {
+          return '<div class="gd-arac-satir' + (g.gizli ? ' pasif' : '') + '">' +
+            '<span><b>' + (i + 1) + '. ' + esc(g.baslik) + '</b>' + (g.gizli ? ' <small>(gizli)</small>' : '') + '</span>' +
+            '<span class="mini-grup">' +
+            '<button class="mini" type="button" data-eylem="gorev-tasi" data-i="' + i + '" data-yon="-1"' + (i === 0 ? ' disabled' : '') + '>↑</button>' +
+            '<button class="mini" type="button" data-eylem="gorev-tasi" data-i="' + i + '" data-yon="1"' + (i === D.gorevler.length - 1 ? ' disabled' : '') + '>↓</button>' +
+            '<button class="mini" type="button" data-eylem="odak-sec" data-odak="gorev-kart" data-id="' + esc(g.id) + '" data-ad="Görev Kartı: ' + esc(g.baslik) + '">Düzenle</button>' +
+            '</span></div>';
+        }).join('') +
+        '</div>';
+    }
+
+    /* 10. Ana Sayfa: Üç Alışkanlık Bölümü */
+    if (odak === 'aliskanliklar') {
+      return '<div class="gd-grup">' +
+        '<h3>"Araçtan Önce Üç Alışkanlık" Bölümü</h3>' +
+        secim('Alışkanlıklar bölümü görünürlüğü', 'site.anasayfa.aliskanliklarAcik', acKapa) +
+        alan('Bölüm başlığı', 'site.anasayfa.aliskanliklarBaslik') +
+        '<fieldset><legend>Alışkanlık Kartları (Numara, Başlık, Açıklama, Bağlantı)</legend>' +
+        satirListesi('site.anasayfa.aliskanliklar', [
+          { anahtar: 'no', yerTutucu: '1' },
+          { anahtar: 'baslik', yerTutucu: 'Başlık' },
+          { anahtar: 'metin', yerTutucu: 'Açıklama', satir: 2 },
+          { anahtar: 'adres', yerTutucu: '#/baslangic' }
+        ], 'Kart ekle', 'tekli') + '</fieldset>' +
+        '</div>';
+    }
+
+    /* 11. Araçlar Sayfası Başlık ve Filtreler */
+    if (odak === 'araclar-ust') {
+      return '<div class="gd-grup">' +
+        '<h3>Araçlar Sayfası Başlık ve Filtre Ayarları</h3>' +
+        alan('Sayfa başlığı (H1)', 'site.sayfalar.araclar.baslik') +
+        alan('Giriş açıklaması', 'site.sayfalar.araclar.giris', { satir: 3 }) +
+        secim('Arama kutusu', 'site.sayfalar.araclar.aramaAcik', acKapa) +
+        alan('Arama kutusu ipucu yazısı', 'site.sayfalar.araclar.aramaYerTutucu') +
+        secim('Kategori filtre çipleri', 'site.sayfalar.araclar.kategoriFiltreAcik', acKapa) +
+        secim('Ücret filtre çipleri', 'site.sayfalar.araclar.ucretFiltreAcik', acKapa) +
+        secim('Kapanan araçlar alt kutusu', 'site.sayfalar.araclar.kapananAcik', acKapa) +
+        '</div>';
+    }
+
+    /* 12. Kategori Grubu Başlığı (Araçlar sayfasında bir kategoriye tıklandığında) */
+    if (odak === 'kategori-grup') {
+      var katId = id && D.site.kategoriler[id] ? id : Object.keys(D.site.kategoriler)[0];
+      var kat = D.site.kategoriler[katId] || {};
+      return '<div class="gd-grup">' +
+        '<h3>Kategori Ayarları: ' + esc(kat.ad || katId) + '</h3>' +
+        alan('Kısa ad (sekme ve filtre adı)', 'site.kategoriler.' + katId + '.ad') +
+        alan('Grup başlığı', 'site.kategoriler.' + katId + '.baslik') +
+        alan('Grup alt açıklaması', 'site.kategoriler.' + katId + '.aciklama', { satir: 2 }) +
+        '<div style="margin-top:10px">' + renkSatiri('k-' + katId, 'Kategori rengi') + '</div>' +
+        '</div>';
+    }
+
+    /* 13. Prompt Atölyesi Bölümleri */
+    if (odak.indexOf('prompt-') === 0) {
+      var formulSecenek = function () {
+        return (D.rehber.promptFormul || []).map(function (f) { return [f.id, f.ad]; });
+      };
+      return '<div class="gd-grup">' +
+        '<h3>Prompt Atölyesi Başlık ve Bölüm Görünürlüğü</h3>' +
+        alan('Sayfa başlığı', 'site.sayfalar.prompt.baslik') +
+        alan('Sayfa giriş metni', 'site.sayfalar.prompt.giris', { satir: 3 }) +
+        '<div class="alan-cift">' +
+        secim('Zayıf / Güçlü prompt karşılaştırması', 'site.sayfalar.prompt.kiyasAcik', acKapa) +
+        alan('Karşılaştırma başlığı', 'site.sayfalar.prompt.kiyasBaslik') +
+        '</div>' +
+        '<div class="alan-cift">' +
+        secim('Güçlü promptun 5 parçası', 'site.sayfalar.prompt.formulAcik', acKapa) +
+        alan('5 parça başlığı', 'site.sayfalar.prompt.formulBaslik') +
+        '</div>' +
+        '<div class="alan-cift">' +
+        secim('Prompt oluşturucu aracı', 'site.sayfalar.prompt.atolyeAcik', acKapa) +
+        alan('Oluşturucu başlığı', 'site.sayfalar.prompt.atolyeBaslik') +
+        '</div>' +
+        alan('Oluşturucu alt açıklaması', 'site.sayfalar.prompt.atolyeAlt') +
+        '<div class="alan-cift">' +
+        secim('Hazır promptlar kütüphanesi', 'site.sayfalar.prompt.hazirAcik', acKapa) +
+        alan('Hazır promptlar başlığı', 'site.sayfalar.prompt.hazirBaslik') +
+        '</div>' +
+        alan('Hazır promptlar alt açıklaması', 'site.sayfalar.prompt.hazirAlt') +
+        '</div>' +
+        '<div class="gd-grup">' +
+        '<h3>Zayıf / Güçlü Prompt Örneği ve 5 Parça İçeriği</h3>' +
+        alan('Zayıf prompt örneği', 'rehber.promptOrnek.zayif', { satir: 2 }) +
+        alan('Neden zayıf açıklaması', 'rehber.promptOrnek.zayifNeden', { satir: 2 }) +
+        '<fieldset><legend>Güçlü prompt cümleleri</legend>' +
+        satirListesi('rehber.promptOrnek.guclu', [
+          { anahtar: 0, secenekler: formulSecenek },
+          { anahtar: 1, yerTutucu: 'Cümle', satir: 2 }
+        ], 'Cümle ekle') + '</fieldset>' +
+        '<fieldset><legend>Prompt formülü 5 parçası</legend>' +
+        satirListesi('rehber.promptFormul', [
+          { anahtar: 'ad', yerTutucu: 'Parça adı' },
+          { anahtar: 'aciklama', yerTutucu: 'Açıklama' }
+        ], 'Parça ekle') + '</fieldset>' +
+        '</div>';
+    }
+
+    /* 14. Güvenli Kullanım Bölümleri */
+    if (odak.indexOf('guvenli-') === 0) {
+      return '<div class="gd-grup">' +
+        '<h3>Güvenli Kullanım Başlık ve Bölüm Ayarları</h3>' +
+        alan('Sayfa başlığı', 'site.sayfalar.guvenli.baslik') +
+        alan('Sayfa giriş metni', 'rehber.guvenlik.giris', { satir: 3 }) +
+        secim('Yap / Yapma karşılaştırma sütunları', 'site.sayfalar.guvenli.yapYapmaAcik', acKapa) +
+        '<div class="alan-cift">' +
+        alan('Sol sütun başlığı (Yapma)', 'site.sayfalar.guvenli.yapmaBaslik') +
+        alan('Sağ sütun başlığı (Yap)', 'site.sayfalar.guvenli.yapBaslik') +
+        '</div>' +
+        alan('Yapay zekâya girilmeyecekler (her satıra bir madde)', 'rehber.guvenlik.yapma', { tip: 'satirlar', satir: 5 }) +
+        alan('Bunun yerine yapılacaklar (her satıra bir madde)', 'rehber.guvenlik.yap', { tip: 'satirlar', satir: 5 }) +
+        '</div>' +
+        '<div class="gd-grup">' +
+        '<h3>İlkeler, Kontrol Listesi, Yaş Sınırı ve Kaynaklar</h3>' +
+        '<div class="alan-cift">' +
+        secim('Beş temel ilke bölümü', 'site.sayfalar.guvenli.ilkelerAcik', acKapa) +
+        alan('İlkeler başlığı', 'site.sayfalar.guvenli.ilkelerBaslik') +
+        '</div>' +
+        '<fieldset><legend>İlkeler maddeleri</legend>' +
+        satirListesi('rehber.guvenlik.ilkeler', [
+          { anahtar: 'baslik', yerTutucu: 'İlke başlığı' },
+          { anahtar: 'metin', yerTutucu: 'Açıklama', satir: 2 }
+        ], 'İlke ekle') + '</fieldset>' +
+        '<div class="alan-cift">' +
+        secim('Kontrol listesi bölümü', 'site.sayfalar.guvenli.kontrolAcik', acKapa) +
+        alan('Kontrol listesi başlığı', 'site.sayfalar.guvenli.kontrolBaslik') +
+        '</div>' +
+        alan('Kontrol maddeleri (her satıra bir madde)', 'rehber.guvenlik.kontrol', { tip: 'satirlar', satir: 5 }) +
+        '<div class="alan-cift">' +
+        secim('Yaş sınırları tablosu', 'site.sayfalar.guvenli.yasAcik', acKapa) +
+        alan('Yaş sınırları başlığı', 'site.sayfalar.guvenli.yasBaslik') +
+        '</div>' +
+        alan('Yaş sınırı açıklama notu', 'rehber.guvenlik.yasNot', { satir: 2 }) +
+        '<div class="alan-cift">' +
+        secim('Resmî kaynaklar bölümü', 'site.sayfalar.guvenli.kaynaklarAcik', acKapa) +
+        alan('Kaynaklar başlığı', 'site.sayfalar.guvenli.kaynaklarBaslik') +
+        '</div>' +
+        '<fieldset><legend>Resmî kaynaklar</legend>' +
+        satirListesi('rehber.guvenlik.kaynaklar', [
+          { anahtar: 'ad', yerTutucu: 'Kurum adı' },
+          { anahtar: 'url', yerTutucu: 'https://…' },
+          { anahtar: 'not', yerTutucu: 'Kısa not' }
+        ], 'Kaynak ekle', 'tekli') + '</fieldset>' +
+        '</div>';
+    }
+
+    /* 15. Yeni Başlayanlar Bölümleri */
+    if (odak.indexOf('baslangic-') === 0) {
+      var R = D.rehber;
+      return '<div class="gd-grup">' +
+        '<h3>Yeni Başlayanlar Başlık ve İlk 30 Dakika</h3>' +
+        alan('Sayfa başlığı', 'site.sayfalar.baslangic.baslik') +
+        alan('Sayfa giriş metni', 'rehber.baslangic.giris', { satir: 3 }) +
+        '<div class="alan-cift">' +
+        secim('İlk 30 dakikan bölümü', 'site.sayfalar.baslangic.adimlarAcik', acKapa) +
+        alan('Adımlar başlığı', 'site.sayfalar.baslangic.adimlarBaslik') +
+        '</div>' +
+        alan('Adımlar (her satıra bir adım)', 'rehber.baslangic.adimlar', { tip: 'satirlar', satir: 5 }) +
+        alan('İlk prompt kutusu metni', 'rehber.baslangic.ilkPrompt', { satir: 4 }) +
+        '</div>' +
+        '<div class="gd-grup">' +
+        '<h3>Yapay Zekâ Türleri ve Terimler Sözlüğü</h3>' +
+        '<div class="alan-cift">' +
+        secim('Yapay zekâ türleri bölümü', 'site.sayfalar.baslangic.turlerAcik', acKapa) +
+        alan('Türler başlığı', 'site.sayfalar.baslangic.turlerBaslik') +
+        '</div>' +
+        alan('Türler alt açıklaması', 'site.sayfalar.baslangic.turlerAlt') +
+        (R.baslangic && R.baslangic.turler ? R.baslangic.turler.map(function (t, i) {
+          var y = 'rehber.baslangic.turler.' + i;
+          return '<div class="yuva" style="padding:10px;margin-bottom:8px"><div class="p-baslik-satir" style="margin-bottom:6px">' +
+            '<b>' + esc(t.ad || 'Tür ' + (i + 1)) + '</b>' +
+            '<button class="mini sil" type="button" data-eylem="liste-sil" data-yol="rehber.baslangic.turler" data-i="' + i + '">Sil</button></div>' +
+            '<div class="alan-cift">' + alan('Adı', y + '.ad') + alan('İngilizcesi', y + '.en') + '</div>' +
+            alan('Açıklama', y + '.aciklama', { satir: 2 }) +
+            alan('Önerilen araçlar (virgülle id)', y + '.araclar', { tip: 'virgul' }) +
+            '</div>';
+        }).join('') : '') +
+        '<button class="mini ekle-satir" type="button" data-eylem="liste-ekle" data-yol="rehber.baslangic.turler" data-sablon="ad|en|aciklama|araclar">+ Tür ekle</button>' +
+        '<div class="alan-cift" style="margin-top:14px">' +
+        secim('Terimler sözlüğü bölümü', 'site.sayfalar.baslangic.terimlerAcik', acKapa) +
+        alan('Sözlük başlığı', 'site.sayfalar.baslangic.terimlerBaslik') +
+        '</div>' +
+        '<fieldset><legend>Terimler sözlüğü</legend>' +
+        satirListesi('rehber.baslangic.terimler', [
+          { anahtar: 0, yerTutucu: 'Terim' },
+          { anahtar: 1, yerTutucu: 'Açıklama', satir: 2 }
+        ], 'Terim ekle') + '</fieldset>' +
+        '</div>';
+    }
+
+    /* 16. Genel Görünüm, AI Arka Plan ve Ana Sayfa Bölüm Sıralaması ('genel') */
     var sira = D.site.anasayfa.sira || ['defter', 'serit', 'gorevler', 'aliskanliklar'];
-    var menuListesi = D.site.menu || [];
-
-    return '<div class="p-kart">' +
-      '<h2>Genel görünüm, AI arka plan ve çerçeve ayarları</h2>' +
-      '<p class="tanim">Sitenin arka planındaki hareketli yapay zekâ veri çiplerini, buzlu cam (glassmorphism) efektini, üst menüyü ve alt bilgiyi buradan açıp kapatabilirsin.</p>' +
-      '<div class="alan-uc">' +
-      secim('AI veri çipleri arka planı', 'site.gorunum.aiArkaplan', acKapa, 'Tüm site arka planında süzülen şeffaf veri çipleri ve devre çizgileri.') +
-      secim('AI arka plan yoğunluğu', 'site.gorunum.aiYogunluk', [['hafif', 'Hafif (Az sayıda çip)'], ['normal', 'Normal (Dengeli)'], ['yogun', 'Yoğun (Daha çok çip)']], 'Arka plandaki veri çipi ve hat sayısı.') +
-      secim('Buzlu cam (glass) efekti', 'site.gorunum.camEfekt', acKapa, 'Kartlarda ve üst menüde yarı saydam buzlu cam görünümü.') +
-      '</div>' +
-      '<div class="alan-uc">' +
-      secim('Üst menü çubuğu', 'site.gorunum.ustMenu', acKapa, 'Sitenin en üstündeki logo ve menü şeridi.') +
-      secim('Alt bilgi (footer) alanı', 'site.gorunum.altBilgi', acKapa, 'Sayfanın en altındaki kurum ve açıklama şeridi.') +
-      secim('Alt bilgide yönetim bağlantısı', 'site.gorunum.altPanelBaglanti', acKapa, 'Alt bilgideki sağ köşe "Yönetim paneli" düğmesi.') +
-      '</div>' +
-      '<div class="alan-cift">' +
-      alan('Yönetim paneli düğme yazısı', 'site.gorunum.altPanelYazi', { yerTutucu: 'Yönetim paneli' }) +
-      alan('Alt bilgi açıklama metni', 'site.gorunum.altNot', { satir: 2, yerTutucu: 'Boş bırakırsan araçların son kontrol tarihiyle otomatik oluşturulur.' }) +
-      '</div></div>' +
-
-      '<div class="p-kart">' +
-      '<div class="p-baslik-satir"><h2>Üst menü bağlantıları ve sıralaması</h2>' +
-      '<button class="mini" type="button" data-eylem="menu-ekle">+ Menü öğesi ekle</button></div>' +
-      '<p class="tanim">Üst menüde hangi sayfaların hangi sırayla görüneceğini, adlarını ve açık/kapalı durumlarını buradan yönetebilirsin.</p>' +
-      '<table class="p-tablo"><thead><tr><th>Menü adı</th><th>Bağlantı adresi</th><th>Durum</th><th class="sag">Sıra / İşlem</th></tr></thead><tbody>' +
-      menuListesi.map(function (m, i) {
-        var kapaliMi = m.durum === 'kapali';
-        return '<tr' + (kapaliMi ? ' class="satir-gizli"' : '') + '>' +
-          '<td><input class="girdi" data-yol="site.menu.' + i + '.ad" value="' + esc(m.ad || '') + '" placeholder="Menü adı"></td>' +
-          '<td><input class="girdi" data-yol="site.menu.' + i + '.adres" value="' + esc(m.adres || '#/') + '" placeholder="#/araclar"></td>' +
-          '<td style="width:170px"><select class="girdi" data-yol="site.menu.' + i + '.durum">' +
-          '<option value="acik"' + (!kapaliMi ? ' selected' : '') + '>Açık (Göster)</option>' +
-          '<option value="kapali"' + (kapaliMi ? ' selected' : '') + '>Kapalı (Gizle)</option>' +
-          '</select></td>' +
-          '<td class="sag"><span class="mini-grup">' +
-          '<button class="mini" type="button" data-eylem="menu-tasi" data-i="' + i + '" data-yon="-1"' + (i === 0 ? ' disabled' : '') + ' title="Yukarı taşı">↑</button>' +
-          '<button class="mini" type="button" data-eylem="menu-tasi" data-i="' + i + '" data-yon="1"' + (i === menuListesi.length - 1 ? ' disabled' : '') + ' title="Aşağı taşı">↓</button>' +
-          '<button class="mini sil" type="button" data-eylem="menu-sil" data-i="' + i + '"' + (menuListesi.length <= 1 ? ' disabled' : '') + ' title="Sil">Sil</button>' +
-          '</span></td></tr>';
-      }).join('') +
-      '</tbody></table></div>' +
-
-      '<div class="p-kart">' +
-      '<h2>Ana sayfa bölüm yerleşimi (sıralama ve aç/kapa)</h2>' +
-      '<p class="tanim">Ana sayfadaki 4 ana bölümün yukarıdan aşağıya görünme sırasını <b>↑ / ↓</b> oklarıyla değiştirebilir veya istediğin bölümü kapatabilirsin.</p>' +
-      '<table class="p-tablo"><thead><tr><th>Bölüm</th><th class="gizle-kucuk">Açıklama</th><th style="width:180px">Durum</th><th class="sag">Sıra</th></tr></thead><tbody>' +
+    return '<div class="gd-grup">' +
+      '<h3>Ana Sayfa Bölüm Sıralaması ve Aç/Kapa</h3>' +
+      '<p class="yardim">Ana sayfadaki 4 ana bölümün sırasını <b>↑ / ↓</b> ile değiştirebilir veya kapatabilirsin.</p>' +
       sira.map(function (k, i) {
         var b = ANASAYFA_BLOK_ADLARI[k] || { ad: k, acikAnahtar: k + 'Acik', aciklama: '' };
         var d = D.site.anasayfa[b.acikAnahtar];
         var kapaliMi = d === 'kapali';
-        return '<tr' + (kapaliMi ? ' class="satir-gizli"' : '') + '>' +
-          '<td><b>' + (i + 1) + '. ' + esc(b.ad) + '</b></td>' +
-          '<td class="gizle-kucuk"><small style="color:var(--soluk)">' + esc(b.aciklama) + '</small></td>' +
-          '<td><select class="girdi" data-yol="site.anasayfa.' + esc(b.acikAnahtar) + '">' +
+        return '<div class="gd-menu-oge' + (kapaliMi ? ' pasif' : '') + '">' +
+          '<b>' + (i + 1) + '. ' + esc(b.ad) + '</b>' +
+          '<small style="display:block;color:var(--soluk);margin:2px 0 8px">' + esc(b.aciklama) + '</small>' +
+          '<div class="gd-menu-alt">' +
+          '<select class="girdi" data-yol="site.anasayfa.' + esc(b.acikAnahtar) + '" style="max-width:155px">' +
           '<option value="acik"' + (!kapaliMi ? ' selected' : '') + '>Açık (Göster)</option>' +
           '<option value="kapali"' + (kapaliMi ? ' selected' : '') + '>Kapalı (Gizle)</option>' +
-          '</select></td>' +
-          '<td class="sag"><span class="mini-grup">' +
-          '<button class="mini" type="button" data-eylem="anasayfa-tasi" data-i="' + i + '" data-yon="-1"' + (i === 0 ? ' disabled' : '') + ' title="Yukarı taşı">↑</button>' +
-          '<button class="mini" type="button" data-eylem="anasayfa-tasi" data-i="' + i + '" data-yon="1"' + (i === sira.length - 1 ? ' disabled' : '') + ' title="Aşağı taşı">↓</button>' +
-          '</span></td></tr>';
+          '</select>' +
+          '<span class="mini-grup" style="margin-left:auto">' +
+          '<button class="mini" type="button" data-eylem="anasayfa-tasi" data-i="' + i + '" data-yon="-1"' + (i === 0 ? ' disabled' : '') + '>↑</button>' +
+          '<button class="mini" type="button" data-eylem="anasayfa-tasi" data-i="' + i + '" data-yon="1"' + (i === sira.length - 1 ? ' disabled' : '') + '>↓</button>' +
+          '</span></div></div>';
       }).join('') +
-      '</tbody></table></div>' +
+      '</div>' +
+      '<div class="gd-grup">' +
+      '<h3>AI Arka Plan ve Cam Efekti</h3>' +
+      secim('AI veri çipleri arka planı', 'site.gorunum.aiArkaplan', acKapa) +
+      secim('AI arka plan yoğunluğu', 'site.gorunum.aiYogunluk', [['hafif', 'Hafif'], ['normal', 'Normal'], ['yogun', 'Yoğun']]) +
+      secim('Buzlu cam (glass) efekti', 'site.gorunum.camEfekt', acKapa) +
+      '</div>' +
+      '<div class="gd-grup">' +
+      '<h3>Hızlı Renk Teması</h3>' +
+      '<div class="hazir-izgara">' + Object.keys(HAZIR).map(function (k) {
+        var h = HAZIR[k];
+        return '<button class="hazir-tema" type="button" data-eylem="tema-hazir" data-id="' + k + '" aria-pressed="' + (D.tema.hazir === k) + '">' +
+          '<span class="seritler">' + ['kagit', 'altin', 'murekkep', 'tebesir'].map(function (r) {
+            return '<i style="background:' + esc(h.renkler[r]) + '"></i>';
+          }).join('') + '</span><b>' + esc(h.ad) + '</b></button>';
+      }).join('') + '</div></div>';
+  }
 
-      '<div class="p-kart">' +
-      '<h2>Ana sayfa metinleri ve alt parçaları</h2>' +
-      '<p class="tanim">Kahraman alanındaki yazıları, arama kutusunu, istatistik kapsüllerini, sağdaki 3B vitrin slaytını ve alt bölüm başlıklarını düzenle.</p>' +
-      '<div class="alan-cift">' +
-      secim('Üst rozet (okul etiketi)', 'site.anasayfa.ustEtiketAcik', acKapa) +
-      alan('Üst rozet özel metni', 'site.anasayfa.ustEtiket', { yerTutucu: 'Boş bırakılırsa okul adı görünür' }) +
-      '</div>' +
-      '<div class="alan-cift">' +
-      alan('Ana sayfa büyük başlık (H1)', 'site.anasayfa.baslik', { yerTutucu: 'Bugün ne hazırlıyorsun?' }) +
-      alan('Giriş açıklaması', 'site.anasayfa.giris', { satir: 2 }) +
-      '</div>' +
-      '<div class="alan-uc">' +
-      secim('Arama çubuğu', 'site.anasayfa.aramaAcik', acKapa) +
-      alan('Arama kutusu ipucu yazısı', 'site.anasayfa.aramaYerTutucu') +
-      alan('Arama düğmesi yazısı', 'site.anasayfa.aramaDugme') +
-      '</div>' +
-      '<div class="alan-cift">' +
-      secim('İstatistik kapsülleri (araç/kategori/prompt sayısı)', 'site.anasayfa.sayilarAcik', acKapa) +
-      secim('Sağdaki 3B vitrin slaytı', 'site.anasayfa.slaytAcik', acKapa, 'Kapatılırsa sol başlık alanı tam genişlik olur.') +
-      '</div>' +
-      '<div class="alan-uc">' +
-      alan('Slayt üst rozet yazısı', 'site.anasayfa.slaytEtiket', { yerTutucu: 'ÖNE ÇIKAN ARAÇ' }) +
-      alan('Slayt ipucu kutusu başlığı', 'site.anasayfa.slaytKutuBaslik', { yerTutucu: '✦ Sınıfta ne işe yarar?' }) +
-      alan('Slayt alt bağlantı yazısı', 'site.anasayfa.slaytBaglantiYazi', { yerTutucu: 'Rehberi ve promptu aç' }) +
-      '</div>' +
-      '<div class="alan-uc">' +
-      alan('Kayan şerit sol etiket yazısı', 'site.anasayfa.seritEtiket', { yerTutucu: 'Vitrin & Yeni Araçlar' }) +
-      alan('Görevler bölümü başlığı', 'site.anasayfa.gorevlerBaslik', { yerTutucu: 'Yapacağın işi seç' }) +
-      secim('Görevler sağ "Tüm araçları gör" bağlantısı', 'site.anasayfa.gorevlerBaglantiAcik', acKapa) +
-      '</div>' +
-      '<div class="alan-cift">' +
-      alan('Görevler sağ bağlantı yazısı', 'site.anasayfa.gorevlerBaglantiYazi', { yerTutucu: 'Tüm araçları gör' }) +
-      alan('Alışkanlıklar bölümü başlığı', 'site.anasayfa.aliskanliklarBaslik', { yerTutucu: 'Araçtan önce üç alışkanlık' }) +
-      '</div>' +
-      '<fieldset><legend>Üç alışkanlık kartları (numara, başlık, açıklama ve bağlantı)</legend>' +
-      satirListesi('site.anasayfa.aliskanliklar', [
-        { anahtar: 'no', yerTutucu: '1' },
-        { anahtar: 'baslik', yerTutucu: 'Başlık' },
-        { anahtar: 'metin', yerTutucu: 'Kısa açıklama' },
-        { anahtar: 'adres', yerTutucu: '#/baslangic' }
-      ], 'Kart ekle', 'dortlu') + '</fieldset>' +
-      '</div>' +
-
-      '<div class="p-kart">' +
-      '<h2>"Araçlar" sayfası metinleri ve filtre aç/kapa ayarları</h2>' +
-      '<div class="alan-cift">' +
-      alan('Sayfa başlığı', 'site.sayfalar.araclar.baslik') +
-      alan('Giriş metni', 'site.sayfalar.araclar.giris', { satir: 2 }) +
-      '</div>' +
-      '<div class="alan-cift">' +
-      secim('Arama kutusu', 'site.sayfalar.araclar.aramaAcik', acKapa) +
-      alan('Arama kutusu ipucu yazısı', 'site.sayfalar.araclar.aramaYerTutucu') +
-      '</div>' +
-      '<div class="alan-uc">' +
-      secim('Kategori filtre çipleri', 'site.sayfalar.araclar.kategoriFiltreAcik', acKapa) +
-      secim('Ücret filtre çipleri', 'site.sayfalar.araclar.ucretFiltreAcik', acKapa) +
-      secim('Kapanan araçlar alt kutusu', 'site.sayfalar.araclar.kapananAcik', acKapa) +
+  function solPanelCiz() {
+    var hizliDugmeler = [
+      { odak: 'genel', ad: '⊞ Sıralama & Genel' },
+      { odak: 'ust-marka', ad: '⌂ Logo & Başlık' },
+      { odak: 'ust-menu', ad: '☰ Üst Menü' },
+      { odak: 'defter-sol', ad: '◧ Sol Sütun' },
+      { odak: 'defter-sag', ad: '◨ Sağ 3B Slayt' },
+      { odak: 'alt-bilgi', ad: '▤ Alt Bilgi' }
+    ];
+    return '<div class="gd-sol-ust">' +
+      '<div class="gd-secili-rozet"><span>SEÇİLİ BÖLÜM / ÖĞE</span><b>✎ ' + esc(seciliOdak.ad || 'Bölüm Ayarları') + '</b></div>' +
+      '<div class="gd-hizli-cubuk">' +
+      hizliDugmeler.map(function (h) {
+        return '<button type="button" class="cip kucuk-cip" data-eylem="odak-sec" data-odak="' + h.odak + '" data-id="" data-ad="' + esc(h.ad.slice(2)) + '" aria-pressed="' + (seciliOdak.odak === h.odak) + '">' + esc(h.ad) + '</button>';
+      }).join('') +
       '</div></div>' +
+      '<div class="gd-sol-icerik" id="gd-sol-icerik">' +
+      odakFormuCiz() +
+      '</div>';
+  }
 
-      '<div class="p-kart">' +
-      '<h2>"Prompt Atölyesi" sayfası metinleri ve bölüm aç/kapa ayarları</h2>' +
-      '<div class="alan-cift">' +
-      alan('Sayfa başlığı', 'site.sayfalar.prompt.baslik') +
-      alan('Giriş metni', 'site.sayfalar.prompt.giris', { satir: 2 }) +
-      '</div>' +
-      '<div class="alan-cift">' +
-      secim('Zayıf / Güçlü prompt karşılaştırma bölümü', 'site.sayfalar.prompt.kiyasAcik', acKapa) +
-      alan('Karşılaştırma bölümü başlığı', 'site.sayfalar.prompt.kiyasBaslik') +
-      '</div>' +
-      '<div class="alan-cift">' +
-      secim('Güçlü promptun 5 parçası bölümü', 'site.sayfalar.prompt.formulAcik', acKapa) +
-      alan('5 parça bölümü başlığı', 'site.sayfalar.prompt.formulBaslik') +
-      '</div>' +
-      '<div class="alan-uc">' +
-      secim('İnteraktif "Kendi promptunu oluştur" aracı', 'site.sayfalar.prompt.atolyeAcik', acKapa) +
-      alan('Oluşturucu başlığı', 'site.sayfalar.prompt.atolyeBaslik') +
-      alan('Oluşturucu alt açıklaması', 'site.sayfalar.prompt.atolyeAlt') +
-      '</div>' +
-      '<div class="alan-uc">' +
-      secim('Hazır promptlar kütüphanesi bölümü', 'site.sayfalar.prompt.hazirAcik', acKapa) +
-      alan('Hazır promptlar başlığı', 'site.sayfalar.prompt.hazirBaslik') +
-      alan('Hazır promptlar alt yazısı', 'site.sayfalar.prompt.hazirAlt') +
-      '</div></div>' +
+  CIZERLER.yerlesim = function () {
+    siteVarsayilanlariTamamla(D.site);
+    var altSecenekler =
+      '<optgroup label="Görev Rehberi Sayfaları">' +
+      D.gorevler.map(function (g) {
+        var h = '#/gorev/' + g.id;
+        return '<option value="' + esc(h) + '"' + (onizlemeSayfa === h ? ' selected' : '') + '>Görev: ' + esc(g.baslik) + '</option>';
+      }).join('') +
+      '</optgroup>' +
+      '<optgroup label="Araç İç Sayfaları">' +
+      D.araclar.slice().sort(function (a, b) { return (a.ad || '').localeCompare(b.ad || '', 'tr'); }).map(function (a) {
+        var h = '#/arac/' + a.id;
+        return '<option value="' + esc(h) + '"' + (onizlemeSayfa === h ? ' selected' : '') + '>Araç: ' + esc(a.ad) + '</option>';
+      }).join('') +
+      '</optgroup>';
 
-      '<div class="p-kart">' +
-      '<h2>"Güvenli Kullanım" sayfası başlıkları ve bölüm aç/kapa ayarları</h2>' +
-      '<p class="tanim">Bölümlerin görünürlüğünü ve başlıklarını buradan, içindeki maddeleri ise <button class="mini" type="button" data-bolum="rehber">Rehber metinleri</button> bölümünden düzenleyebilirsin.</p>' +
-      '<div class="alan-cift">' +
-      alan('Sayfa başlığı', 'site.sayfalar.guvenli.baslik') +
-      secim('Yap / Yapma karşılaştırma kutuları', 'site.sayfalar.guvenli.yapYapmaAcik', acKapa) +
+    return '<div class="gorsel-duzenleyici">' +
+      '<aside class="gd-sol" id="gd-sol-panel" aria-label="Seçili bölüm ayarları">' +
+      solPanelCiz() +
+      '</aside>' +
+      '<section class="gd-sag" aria-label="Canlı sayfa önizlemesi">' +
+      '<div class="gd-sag-ust">' +
+      '<div class="gd-sayfa-sekmeler" role="tablist" aria-label="Önizlenecek sayfa">' +
+      ANA_SAYFALAR.map(function (s) {
+        return '<button type="button" class="gd-sekme" data-eylem="onizleme-sayfa" data-onizleme-sayfa="' + esc(s.hash) + '" data-hash="' + esc(s.hash) + '" aria-pressed="' + (onizlemeSayfa === s.hash) + '">' + esc(s.ad) + '</button>';
+      }).join('') +
       '</div>' +
-      '<div class="alan-cift">' +
-      alan('Sol kutu başlığı (Yapma)', 'site.sayfalar.guvenli.yapmaBaslik') +
-      alan('Sağ kutu başlığı (Yap)', 'site.sayfalar.guvenli.yapBaslik') +
+      '<select class="girdi gd-alt-secim" id="onizleme-alt-secim" aria-label="Görev veya araç sayfası seç">' +
+      '<option value="">— Görev / Araç sayfası aç —</option>' +
+      altSecenekler +
+      '</select>' +
+      '<div class="gd-cihaz-grup">' +
+      '<button type="button" class="mini" data-eylem="onizleme-cihaz" data-onizleme-cihaz="masaustu" data-id="masaustu" aria-pressed="' + (onizlemeCihaz === 'masaustu') + '">Masaüstü</button>' +
+      '<button type="button" class="mini" data-eylem="onizleme-cihaz" data-onizleme-cihaz="mobil" data-id="mobil" aria-pressed="' + (onizlemeCihaz === 'mobil') + '">Mobil</button>' +
       '</div>' +
-      '<div class="alan-cift">' +
-      secim('Temel ilkeler bölümü', 'site.sayfalar.guvenli.ilkelerAcik', acKapa) +
-      alan('Temel ilkeler başlığı', 'site.sayfalar.guvenli.ilkelerBaslik') +
       '</div>' +
-      '<div class="alan-cift">' +
-      secim('Sınıfa götürmeden önce kontrol listesi', 'site.sayfalar.guvenli.kontrolAcik', acKapa) +
-      alan('Kontrol listesi başlığı', 'site.sayfalar.guvenli.kontrolBaslik') +
+      '<div class="gd-ipucu">' +
+      '<span>💡 <b>Canlı Tıkla & Düzenle:</b> Önizlemedeki herhangi bir sütuna, başlığa, karta, logoya veya görsele tıkla; ayarları hemen solda açılsın. (Kartların iç sayfasına girmek için çift tıkla.)</span>' +
       '</div>' +
-      '<div class="alan-cift">' +
-      secim('Araçların yaş sınırları tablosu', 'site.sayfalar.guvenli.yasAcik', acKapa) +
-      alan('Yaş sınırları başlığı', 'site.sayfalar.guvenli.yasBaslik') +
+      '<div class="gd-cerceve-sar cihaz-' + esc(onizlemeCihaz) + '" id="gd-cerceve-sar">' +
+      '<iframe id="canli-onizleme" src="index.html?onizleme=1' + esc(onizlemeSayfa) + '" title="Canlı Site Önizlemesi"></iframe>' +
       '</div>' +
-      '<div class="alan-cift">' +
-      secim('Resmî kaynaklar bölümü', 'site.sayfalar.guvenli.kaynaklarAcik', acKapa) +
-      alan('Resmî kaynaklar başlığı', 'site.sayfalar.guvenli.kaynaklarBaslik') +
-      '</div></div>' +
-
-      '<div class="p-kart">' +
-      '<h2>"Yeni Başlayanlar" sayfası başlıkları ve bölüm aç/kapa ayarları</h2>' +
-      '<p class="tanim">Bölümlerin görünürlüğünü ve başlıklarını buradan, adım ve terim içeriklerini ise <button class="mini" type="button" data-bolum="rehber">Rehber metinleri</button> bölümünden düzenleyebilirsin.</p>' +
-      '<div class="alan-cift">' +
-      alan('Sayfa başlığı', 'site.sayfalar.baslangic.baslik') +
-      secim('İlk 30 dakikan (adımlar ve ilk prompt) bölümü', 'site.sayfalar.baslangic.adimlarAcik', acKapa) +
-      '</div>' +
-      '<div class="alan-cift">' +
-      alan('İlk 30 dakikan başlığı', 'site.sayfalar.baslangic.adimlarBaslik') +
-      secim('Yapay zekâ türleri bölümü', 'site.sayfalar.baslangic.turlerAcik', acKapa) +
-      '</div>' +
-      '<div class="alan-cift">' +
-      alan('Yapay zekâ türleri başlığı', 'site.sayfalar.baslangic.turlerBaslik') +
-      alan('Yapay zekâ türleri alt açıklaması', 'site.sayfalar.baslangic.turlerAlt') +
-      '</div>' +
-      '<div class="alan-cift">' +
-      secim('Sık duyacağın kelimeler (sözlük) bölümü', 'site.sayfalar.baslangic.terimlerAcik', acKapa) +
-      alan('Sözlük bölümü başlığı', 'site.sayfalar.baslangic.terimlerBaslik') +
-      '</div></div>';
+      '</section>' +
+      '</div>';
   };
 
   /* ===================== 14. Bölüm: Site ayarları ===================== */
@@ -1685,11 +2119,15 @@
 
   document.addEventListener('input', alanDegisti);
   document.addEventListener('change', function (e) {
+    if (e.target.id === 'onizleme-alt-secim') {
+      if (e.target.value) onizlemeSayfaGit(e.target.value, true);
+      return;
+    }
     if (e.target.matches('[data-yukle]')) { gorselYukleSec(e.target); return; }
     if (e.target.matches('[data-yedek-al]')) { yedektenAl(e.target); return; }
     if (e.target.matches('[data-eylem="tema-yazi"]')) {
       var f = YAZI_TIPLERI[Number(e.target.value)];
-      if (f) { D.tema.serif = f[1]; D.tema.sans = f[2]; kirlet('tema'); window.temaUygula(D.tema); }
+      if (f) { D.tema.serif = f[1]; D.tema.sans = f[2]; kirlet('tema'); window.temaUygula(D.tema); onizlemeGonder(); }
       return;
     }
     if (e.target.matches('[data-kat]')) { kategoriSec(e.target); return; }
@@ -1723,6 +2161,8 @@
       d = alanEl.value.split(',').map(kirp).filter(Boolean);
     } else if (tip === 'evet') {
       d = alanEl.value === '1' ? true : '';
+    } else if (tip === 'evet-onay') {
+      d = alanEl.checked ? true : '';
     } else {
       d = alanEl.value;
     }
@@ -1734,6 +2174,7 @@
       el('yan-ad').textContent = D.site.ad || 'Rehber';
       if (/kategoriler/.test(yol)) window.kategoriRenkleri(D.site.kategoriler);
     }
+    onizlemeGonder();
   }
 
   function renkYaz(ad, deger, hedef) {
@@ -1742,6 +2183,7 @@
     D.tema.renkler[ad] = d;
     kirlet('tema');
     window.temaUygula(D.tema);
+    onizlemeGonder();
     // Renk kutusu ile kod kutusunu birbirine eşitle (sayfayı yeniden çizmeden).
     var satir = hedef.closest('.renk-satir');
     if (!satir) return;
@@ -1964,7 +2406,29 @@
       return;
     }
 
-    /* --- Sayfalar ve yerleşim --- */
+    /* --- Sayfalar ve yerleşim (Canlı Önizleme & Tıkla-Düzenle) --- */
+    if (eylem === 'onizleme-sayfa') {
+      onizlemeSayfaGit(d.getAttribute('data-hash') || '#/', true);
+      return;
+    }
+    if (eylem === 'onizleme-cihaz') {
+      onizlemeCihaz = id || 'masaustu';
+      yerlesimCubukGuncelle();
+      return;
+    }
+    if (eylem === 'odak-sec') {
+      seciliOdak = {
+        odak: d.getAttribute('data-odak') || 'genel',
+        id: d.getAttribute('data-id') || '',
+        ad: d.getAttribute('data-ad') || 'Bölüm Ayarları'
+      };
+      if (el('gd-sol-panel')) {
+        el('gd-sol-panel').innerHTML = solPanelCiz();
+        el('gd-sol-panel').scrollTo({ top: 0, behavior: 'smooth' });
+      }
+      onizlemeGonder();
+      return;
+    }
     if (eylem === 'menu-tasi') {
       tasi(D.site.menu, i, Number(d.getAttribute('data-yon')), 'site');
       return;
@@ -2158,6 +2622,31 @@
     };
     okuyucu.readAsText(dosya);
   }
+
+  window.addEventListener('message', function (e) {
+    var msg = e.data;
+    if (!msg || typeof msg !== 'object') return;
+    if (msg.tip === 'onizleme-sec') {
+      seciliOdak = {
+        odak: msg.odak || 'genel',
+        id: msg.id || '',
+        ad: msg.ad || msg.odak || 'Bölüm Ayarları'
+      };
+      if (msg.hash) onizlemeSayfa = msg.hash;
+      if (bolumAdi === 'yerlesim' && el('gd-sol-panel')) {
+        el('gd-sol-panel').innerHTML = solPanelCiz();
+        el('gd-sol-panel').scrollTo({ top: 0, behavior: 'smooth' });
+        el('gd-sol-panel').classList.remove('vurgu-darbe');
+        void el('gd-sol-panel').offsetWidth;
+        el('gd-sol-panel').classList.add('vurgu-darbe');
+        yerlesimCubukGuncelle();
+      }
+      bildir('✎ ' + seciliOdak.ad + ' ayarları solda açıldı.');
+    } else if (msg.tip === 'onizleme-sayfa' && msg.hash) {
+      onizlemeSayfa = msg.hash;
+      if (bolumAdi === 'yerlesim') yerlesimCubukGuncelle();
+    }
+  });
 
   el('kaydet-dugme').addEventListener('click', kaydet);
 
