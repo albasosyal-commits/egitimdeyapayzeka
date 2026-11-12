@@ -295,7 +295,7 @@
     return (k && o && window.ozet256) ? window.ozet256(k + ':' + o) : 'yerel';
   }
 
-  function canliVeriKaydet(dosyalar) {
+  function canliVeriKaydet(dosyalar, sunucuyaYazildi) {
     try {
       var mevcut = {};
       var ham = localStorage.getItem(CANLI);
@@ -306,29 +306,59 @@
       (dosyalar || Object.keys(DOSYA)).forEach(function (k) {
         if (D[k] !== undefined) mevcut[k] = kopya(D[k]);
       });
-      localStorage.setItem(CANLI, JSON.stringify({ tarih: new Date().toISOString(), veri: mevcut }));
+      localStorage.setItem(CANLI, JSON.stringify({
+        tarih: new Date().toISOString(),
+        sunucuyaYazildi: sunucuyaYazildi ? Date.now() : 0,
+        veri: mevcut
+      }));
     } catch (e) { /* depolama doluysa yok say */ }
   }
 
+  function canliVeriSunucuyaBekliyorMu() {
+    try {
+      var ham = localStorage.getItem(CANLI);
+      if (!ham) return false;
+      var parsed = JSON.parse(ham);
+      return Boolean(parsed && parsed.veri && !parsed.sunucuyaYazildi);
+    } catch (e) { return false; }
+  }
+
   function istek(adres, govde) {
+    var paket = Object.assign({}, govde || {}, {
+      _anahtar: (anahtar && anahtar !== 'yerel') ? anahtar : kaliciAnahtar()
+    });
     var secenek = {
       method: 'POST',
       headers: {
-        'content-type': 'application/json',
-        'x-anahtar': (anahtar && anahtar !== 'yerel') ? anahtar : kaliciAnahtar()
+        'content-type': 'text/plain;charset=UTF-8'
       },
-      body: JSON.stringify(govde || {})
+      body: JSON.stringify(paket)
     };
-    return fetch(apiKok + '/' + adres, secenek).then(function (c) {
-      return c.json().then(function (v) {
-        if (!c.ok || !v.tamam) throw new Error(v.hata || 'Sunucu hatası (' + c.status + ')');
-        return v;
+    var hedefler = [apiKok, 'http://localhost:8731/api', 'http://127.0.0.1:8731/api', 'api'];
+    var tekil = [];
+    hedefler.forEach(function (h) { if (h && tekil.indexOf(h) === -1) tekil.push(h); });
+
+    function dene(indeks, sonHata) {
+      if (indeks >= tekil.length) {
+        return Promise.reject(sonHata || new Error('Sunucuya ulaşılamadı.'));
+      }
+      var kokAday = tekil[indeks];
+      return fetch(kokAday + '/' + adres, secenek).then(function (c) {
+        return c.json().then(function (v) {
+          if (!c.ok || !v.tamam) throw new Error(v.hata || 'Sunucu hatası (' + c.status + ')');
+          apiKok = kokAday;
+          sunucuVar = true;
+          return v;
+        });
+      }).catch(function (err) {
+        return dene(indeks + 1, err);
       });
-    });
+    }
+    return dene(0);
   }
 
   function sunucuBak() {
-    var adaylar = ['api', 'http://localhost:8731/api', 'http://127.0.0.1:8731/api'];
+    var adaylar = ['http://localhost:8731/api', 'http://127.0.0.1:8731/api', 'api'];
     function dene(indeks) {
       if (indeks >= adaylar.length) {
         sunucuVar = false;
@@ -434,19 +464,21 @@
     el('yan-ad').textContent = D.site.ad || 'Rehber';
     el('yan-im').innerHTML = '<img src="' + esc(D.site.logo || 'assets/ikon.svg') + '" alt="" style="width:100%;height:100%;object-fit:contain">';
     el('sunucu-durum').innerHTML = sunucuVar
-      ? '<b>Sunucu açık.</b> Kaydet dediğinde dosyalar doğrudan yazılır.'
-      : '<b>Anlık kayıt etkin.</b> Kaydet dediğinde değişiklikler doğrudan uygulanır.';
+      ? '<b>Canlı sunucu bağlı.</b> Kaydet dediğinde hem masaüstü hem mobil site anında güncellenir.'
+      : '<b>Yerel kayıt etkin.</b> Tüm cihazlarda görünmesi için yerel sunucu açık olmalı.';
     durumCiz();
   }
 
   function durumCiz() {
     var kirli = kirliDosyalar().length;
+    var bekleyen = canliVeriSunucuyaBekliyorMu();
     var k = el('kayit-durum');
-    k.className = 'kayit-durum ' + (kirli ? 'bekler' : 'temiz');
+    k.className = 'kayit-durum ' + ((kirli || bekleyen) ? 'bekler' : 'temiz');
     el('kayit-yazi').textContent = kirli
       ? kirli + ' dosya kaydedilmeyi bekliyor'
-      : 'Her şey kayıtlı';
-    el('kaydet-dugme').disabled = !kirli;
+      : (bekleyen ? 'Tarayıcıdaki değişiklikler canlıya aktarılacak' : 'Her şey kayıtlı ve yayında');
+    el('kaydet-dugme').disabled = false;
+    el('kaydet-dugme').textContent = (kirli || bekleyen) ? 'Kaydet ve Yayınla' : 'Kaydet';
     document.querySelectorAll('#yan-menu [data-bolum]').forEach(function (b) {
       var tanim = BOLUMLER.find(function (x) { return x.ad === b.getAttribute('data-bolum'); });
       b.setAttribute('aria-current', String(b.getAttribute('data-bolum') === bolumAdi));
@@ -1989,12 +2021,18 @@
 
   function kaydet() {
     var dosyalar = kirliDosyalar();
-    if (!dosyalar.length) { bildir('Kaydedilecek bir değişiklik yok.'); return; }
+    if (!dosyalar.length) {
+      dosyalar = ['site', 'araclar', 'gorseller', 'gorevler', 'rehber', 'tema'];
+    }
 
     el('kaydet-dugme').disabled = true;
-    canliVeriKaydet(dosyalar);
+    el('kaydet-dugme').textContent = 'Yayınlanıyor…';
+    canliVeriKaydet(dosyalar, false);
 
-    function yerelKayitTamamla(mesaj) {
+    function yerelKayitTamamla(mesaj, sunucuBasarili) {
+      if (sunucuBasarili) {
+        canliVeriKaydet(dosyalar, true);
+      }
       dosyalar.forEach(function (k) { degisen[k] = false; });
       taslakSil();
       taslakYaz();
@@ -2006,15 +2044,15 @@
     var kontrol = sunucuVar ? Promise.resolve(true) : sunucuBak();
     kontrol.then(function (acik) {
       if (!acik) {
-        yerelKayitTamamla(dosyalar.length + ' değişiklik kaydedildi ve sitede etkinleştirildi.');
+        yerelKayitTamamla('Tarayıcıya kaydedildi. Mobil/canlı siteye yansıması için yerel sunucu açık olmalı.', false);
         return;
       }
       return istek('kaydet', {
         dosyalar: dosyalar.map(function (k) { return { yol: DOSYA[k].yol, icerik: dosyaMetni(k) }; })
-      }).then(function (v) {
-        yerelKayitTamamla(v.yazilan.length + ' dosya kaydedildi. Siteyi yenileyince görünür.');
+      }).then(function () {
+        yerelKayitTamamla('Kaydedildi ve canlı siteye (mobil dahil) yayınlandı!', true);
       }).catch(function () {
-        yerelKayitTamamla(dosyalar.length + ' değişiklik kaydedildi ve sitede etkinleştirildi.');
+        yerelKayitTamamla('Tarayıcıya kaydedildi; canlı sunucuya ulaşılamadı.', false);
       });
     });
   }
@@ -2707,6 +2745,16 @@
     } else {
       girisAc();
       el('g-kullanici').focus();
+    }
+    if (sunucuVar && canliVeriSunucuyaBekliyorMu()) {
+      var senkronDosyalar = ['site', 'araclar', 'gorseller', 'gorevler', 'rehber', 'tema'];
+      istek('kaydet', {
+        dosyalar: senkronDosyalar.map(function (k) { return { yol: DOSYA[k].yol, icerik: dosyaMetni(k) }; })
+      }).then(function () {
+        canliVeriKaydet(senkronDosyalar, true);
+        durumCiz();
+        bildir('Tarayıcıdaki değişiklikler canlı siteye ve mobile aktarıldı!');
+      }).catch(function () { /* yok say */ });
     }
   });
 })();

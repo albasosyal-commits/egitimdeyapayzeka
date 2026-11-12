@@ -58,12 +58,54 @@
     }).join('\n');
   };
 
+  var senkronCalisiyor = false;
+  function tarayiciVerisiniSunucuyaAktar(paket) {
+    if (senkronCalisiyor || !paket || !paket.veri || typeof fetch !== 'function') return;
+    senkronCalisiyor = true;
+    var adresler = [
+      'http://localhost:8731/api/veri-senkron',
+      'http://127.0.0.1:8731/api/veri-senkron',
+      'api/veri-senkron'
+    ];
+    var govde = JSON.stringify({ _anahtar: 'yerel', veri: paket.veri });
+    function dene(i) {
+      if (i >= adresler.length) {
+        senkronCalisiyor = false;
+        return;
+      }
+      fetch(adresler[i], {
+        method: 'POST',
+        headers: { 'content-type': 'text/plain;charset=UTF-8' },
+        body: govde
+      }).then(function (c) {
+        return c.json();
+      }).then(function (v) {
+        if (v && v.tamam) {
+          senkronCalisiyor = false;
+          try {
+            paket.sunucuyaYazildi = Date.now();
+            localStorage.setItem('rehber-canli-veri', JSON.stringify(paket));
+          } catch (e) { /* yok say */ }
+          return;
+        }
+        dene(i + 1);
+      }).catch(function () {
+        dene(i + 1);
+      });
+    }
+    dene(0);
+  }
+
   window.canliVeriUygula = function () {
     try {
       var ham = localStorage.getItem('rehber-canli-veri');
       if (!ham) return;
       var paket = JSON.parse(ham);
       if (!paket || !paket.veri) return;
+      if (paket.sunucuyaYazildi && (Date.now() - Number(paket.sunucuyaYazildi) > 180000)) {
+        localStorage.removeItem('rehber-canli-veri');
+        return;
+      }
       var ESLE = {
         site: 'SITE',
         araclar: 'ARACLAR',
@@ -81,6 +123,9 @@
       if (window.SITE) {
         if (!window.SITE.logo) window.SITE.logo = 'assets/ikon.svg';
         if (!window.SITE.paylasimGorsel) window.SITE.paylasimGorsel = 'assets/og-banner.png';
+      }
+      if (!paket.sunucuyaYazildi) {
+        tarayiciVerisiniSunucuyaAktar(paket);
       }
     } catch (e) { /* yok say */ }
   };
