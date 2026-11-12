@@ -2019,11 +2019,50 @@
       'bu adımların hiçbirine gerek kalmaz.</p></div>';
   };
 
+  function pencereIleKaydet(dosyaPaketi) {
+    return new Promise(function (coz, red) {
+      var pen;
+      try {
+        pen = window.open('http://localhost:8731/api/pencere-senkron', 'yerel_kayit', 'width=400,height=240');
+      } catch (e) {
+        red(e);
+        return;
+      }
+      if (!pen) {
+        red(new Error('Açılır pencere engellendi'));
+        return;
+      }
+      var bitti = false;
+      var zaman = setTimeout(function () {
+        if (bitti) return;
+        bitti = true;
+        window.removeEventListener('message', dinle);
+        red(new Error('Zaman aşımı'));
+      }, 15000);
+      function dinle(e) {
+        var d = e.data;
+        if (!d || typeof d !== 'object') return;
+        if (d.tip === 'pencere-hazir') {
+          try { pen.postMessage({ tip: 'kaydet-paket', dosyalar: dosyaPaketi }, '*'); } catch (err) { /* yok say */ }
+        } else if (d.tip === 'pencere-kaydet-sonuc') {
+          if (bitti) return;
+          bitti = true;
+          clearTimeout(zaman);
+          window.removeEventListener('message', dinle);
+          if (d.tamam) coz(d);
+          else red(new Error(d.hata || 'Kayıt başarısız'));
+        }
+      }
+      window.addEventListener('message', dinle);
+    });
+  }
+
   function kaydet() {
     var dosyalar = kirliDosyalar();
     if (!dosyalar.length) {
       dosyalar = ['site', 'araclar', 'gorseller', 'gorevler', 'rehber', 'tema'];
     }
+    var dosyaPaketi = dosyalar.map(function (k) { return { yol: DOSYA[k].yol, icerik: dosyaMetni(k) }; });
 
     el('kaydet-dugme').disabled = true;
     el('kaydet-dugme').textContent = 'Yayınlanıyor…';
@@ -2041,6 +2080,19 @@
       bildir(mesaj);
     }
 
+    if (location.protocol === 'https:' && !sunucuVar) {
+      pencereIleKaydet(dosyaPaketi).then(function () {
+        yerelKayitTamamla('Kaydedildi ve canlı siteye (mobil dahil) yayınlandı!', true);
+      }).catch(function () {
+        istek('kaydet', { dosyalar: dosyaPaketi }).then(function () {
+          yerelKayitTamamla('Kaydedildi ve canlı siteye (mobil dahil) yayınlandı!', true);
+        }).catch(function () {
+          yerelKayitTamamla('Tarayıcıya kaydedildi; canlı sunucuya ulaşılamadı.', false);
+        });
+      });
+      return;
+    }
+
     var kontrol = sunucuVar ? Promise.resolve(true) : sunucuBak();
     kontrol.then(function (acik) {
       if (!acik) {
@@ -2048,7 +2100,7 @@
         return;
       }
       return istek('kaydet', {
-        dosyalar: dosyalar.map(function (k) { return { yol: DOSYA[k].yol, icerik: dosyaMetni(k) }; })
+        dosyalar: dosyaPaketi
       }).then(function () {
         yerelKayitTamamla('Kaydedildi ve canlı siteye (mobil dahil) yayınlandı!', true);
       }).catch(function () {

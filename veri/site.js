@@ -52,7 +52,7 @@ window.SITE = {
     "aramaYerTutucu": "Araç ya da iş ara: sınav, şarkı, Gemini…",
     "aramaDugme": "Ara",
     "sayilarAcik": "acik",
-    "slaytAcik": "acik",
+    "slaytAcik": "kapali",
     "slaytEtiket": "ÖNE ÇIKAN ARAÇ",
     "slaytKutuBaslik": "✦ Sınıfta ne işe yarar?",
     "slaytBaglantiYazi": "Rehberi ve promptu aç",

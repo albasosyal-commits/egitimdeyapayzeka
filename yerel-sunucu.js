@@ -121,10 +121,22 @@ function gitSenkronla() {
   });
 }
 
+function surumDamgasiGuncelle(etiket) {
+  ['index.html', 'yonetim.html'].forEach(function (dosyaAdi) {
+    try {
+      const tam = path.join(kok, dosyaAdi);
+      if (!fs.existsSync(tam)) return;
+      const eski = fs.readFileSync(tam, 'utf8');
+      const yeni = eski.replace(/((?:veri|js|css)\/[a-z0-9-]+\.(?:js|css))(?:\?v=[^"']*)?/gi, '$1?v=' + etiket);
+      if (yeni !== eski) fs.writeFileSync(tam, yeni, 'utf8');
+    } catch (e) { /* yok say */ }
+  });
+}
+
 function gitCalistir() {
   gitCalisiyor = true;
   gitTekrar = false;
-  const komut = 'git add -A veri assets && (git diff --cached --quiet || git commit -m "Yonetim panelinden guncellendi") && git pull --rebase --autostash origin main && git push origin main';
+  const komut = 'git add -A veri assets index.html yonetim.html && (git diff --cached --quiet || git commit -m "Yonetim panelinden guncellendi") && git pull --rebase --autostash origin main && git push origin main';
   exec(komut, { cwd: kok }, function (err, stdout, stderr) {
     if (err) {
       console.error('Git senkron uyarisi:', (stderr || err.message || '').trim());
@@ -304,6 +316,7 @@ const servisler = {
       return;
     }
     console.log('kaydedildi: ' + yazilan.join(', ') + '  (yedek: yedek/' + zaman + ')');
+    surumDamgasiGuncelle(zaman);
     gitSenkronla().then(function (gitTamam) {
       cevapla(cevap, 200, { tamam: true, yazilan: yazilan, yedek: 'yedek/' + zaman, canliyaGonderildi: gitTamam }, istek);
     });
@@ -338,6 +351,7 @@ const servisler = {
     }
     if (yazilan.length) {
       console.log('tarayicidan senkronize edildi: ' + yazilan.join(', ') + '  (yedek: yedek/' + zaman + ')');
+      surumDamgasiGuncelle(zaman);
       gitSenkronla().then(function (gitTamam) {
         cevapla(cevap, 200, { tamam: true, yazilan: yazilan, canliyaGonderildi: gitTamam }, istek);
       });
@@ -399,11 +413,38 @@ const servisler = {
     console.log('gorsel silindi: ' + yol);
     gitSenkronla();
     cevapla(cevap, 200, { tamam: true }, istek);
+  },
+
+  /* HTTPS (Vercel) üzerinden yönetim paneli açıldığında Chrome'un HTTP alt-istek engelini aşan köprü penceresi */
+  'pencere-senkron': function (govde, istek, cevap) {
+    const html = '<!doctype html><html lang="tr"><head><meta charset="utf-8"><title>Canlı Siteye Yayınlanıyor…</title>' +
+      '<style>body{font-family:system-ui,sans-serif;background:#0d161b;color:#eef5f7;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;text-align:center}' +
+      '.kutu{padding:24px;border-radius:14px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);max-width:340px}' +
+      'h3{margin:0 0 8px;font-size:1rem;color:#5fd3bd}p{margin:0;font-size:.86rem;color:#a7bbc4}</style></head>' +
+      '<body><div class="kutu"><h3 id="b">Canlı siteye yayınlanıyor…</h3><p id="m">Değişiklikler GitHub ve mobil siteye aktarılıyor…</p></div>' +
+      '<script>' +
+      'window.addEventListener("message",function(e){' +
+      'var d=e.data;if(!d||d.tip!=="kaydet-paket")return;' +
+      'fetch("/api/kaydet",{method:"POST",headers:{"content-type":"text/plain;charset=UTF-8"},body:JSON.stringify({_anahtar:"yerel",dosyalar:d.dosyalar||[]})})' +
+      '.then(function(r){return r.json()}).then(function(v){' +
+      'if(v&&v.tamam){document.getElementById("b").textContent="Yayınlandı ✓";document.getElementById("m").textContent="Mobil ve masaüstü site güncellendi.";' +
+      'if(window.opener)window.opener.postMessage({tip:"pencere-kaydet-sonuc",tamam:true,yazilan:v.yazilan},"*");' +
+      'setTimeout(function(){window.close()},500);}else{throw new Error((v&&v.hata)||"Kayıt başarısız");}' +
+      '}).catch(function(err){document.getElementById("b").textContent="Hata";document.getElementById("m").textContent=err.message;' +
+      'if(window.opener)window.opener.postMessage({tip:"pencere-kaydet-sonuc",tamam:false,hata:err.message},"*");});' +
+      '});' +
+      'if(window.opener)window.opener.postMessage({tip:"pencere-hazir"},"*");' +
+      '</script></body></html>';
+    cevap.writeHead(200, Object.assign({
+      'content-type': 'text/html; charset=utf-8',
+      'cache-control': 'no-store'
+    }, corsBasliklar(istek)));
+    cevap.end(html);
   }
 };
 
 /* Giriş yapılmadan çağrılabilen servisler. */
-const SERBEST = ['durum', 'giris', 'cikis', 'veri-senkron'];
+const SERBEST = ['durum', 'giris', 'cikis', 'veri-senkron', 'pencere-senkron'];
 
 /* ---------- sunucu ---------- */
 
@@ -419,7 +460,7 @@ const sunucu = http.createServer(function (istek, cevap) {
     const ad = yol.slice(5);
     const servis = servisler[ad];
     if (!servis) { cevapla(cevap, 404, { tamam: false, hata: 'Böyle bir servis yok.' }, istek); return; }
-    if (ad !== 'durum' && istek.method !== 'POST') {
+    if (ad !== 'durum' && ad !== 'pencere-senkron' && istek.method !== 'POST') {
       cevapla(cevap, 405, { tamam: false, hata: 'Yöntem desteklenmiyor.' }, istek);
       return;
     }
